@@ -181,7 +181,7 @@ var tips = function(msg, type, time){
     '    return false;'+
     '};'+
     'function getBaseInfo() { '+
-    '    window.postMessage({ type:"afterGetBaseInfo", data: {__INITIAL_STATE__}}, "*");'+
+    '    window.postMessage({ type:"afterGetBaseInfo", data: typeof __INITIAL_STATE__ == "undefined"?{}:{__INITIAL_STATE__}}, "*");'+
     '};'+
     '</script>'
     $('body').append(pluginCode)

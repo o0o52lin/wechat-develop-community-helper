@@ -184,21 +184,33 @@ var tips = function(msg, type, time){
     '    window.postMessage({ type:"afterGetBaseInfo", data: typeof __INITIAL_STATE__ == "undefined"?{}:{__INITIAL_STATE__}}, "*");'+
     '    document.body.removeChild(o);'+
     '};'+
-    'function clearCommentContent(o) { '+
-    '    window.targetAppEditor.targetCommentL2 = null;'+
-    '    window.targetAppEditor.commentReplyValue = "";'+
-    '    window.targetAppEditor.input = "";'+
-    '    window.targetAppEditor.codeHtml = "";'+
-    '    window.targetAppEditor.imgList = [];'+
-    '    window.targetAppEditor.code = "";'+
-    '    window.targetAppEditor.inputvalue = "";'+
-    '    window.targetAppEditor.$refs.replyInput && window.targetAppEditor.$refs.replyInput.clearContent();'+
-    '    window.targetAppEditor.$refs.uploadImages && window.targetAppEditor.$refs.uploadImages.clearImg();'+
-    '    window.targetAppEditor.clearContent && window.targetAppEditor.clearContent();'+
+    'function clearCommentContent(o, t) { '+
+    '    var tar = window.targetAppEditor;'+
+    '    if(t == "add"){'+
+    '       tar.showQuestionCommentsInput = !1;'+
+    '       tar.targetComment = null;'+
+    '       tar.targetCommentId = "";'+
+    '       tar.$refs.questionCommentEditor && tar.$refs.questionCommentEditor.setContent("");'+
+    '    }else if(t == "update"){'+
+    '       tar.modifying = !1;'+
+    '       tar.commentReplyValue = "";'+
+    '       tar.$refs.modifyCommentEditor && tar.$refs.modifyCommentEditor.setContent("");'+
+    '    }else{'+
+    '       tar.targetCommentL2 = null;'+
+    '       tar.commentReplyValue = "";'+
+    '       tar.input = "";'+
+    '       tar.codeHtml = "";'+
+    '       tar.imgList = [];'+
+    '       tar.code = "";'+
+    '       tar.inputvalue = "";'+
+    '       tar.$refs.replyInput && tar.$refs.replyInput.clearContent();'+
+    '       tar.$refs.uploadImages && tar.$refs.uploadImages.clearImg();'+
+    '       tar.clearContent && tar.clearContent();'+
+    '    }'+
     '    o && $(o).remove();'+
     '};'+
-    'function commentOk(o) { '+
-    '    var data = localStorage.getItem("commentOBackData");'+
+    'function commentReplyOk(o) { '+
+    '    var data = localStorage.getItem("commentBackData");'+
     '    data = data == "0" ? false : JSON.parse(data);'+
     '    if(!data || !window.targetAppEditor) return;'+
     '    console.log(data, window.targetAppEditor);'+
@@ -206,8 +218,36 @@ var tips = function(msg, type, time){
     '        newComment: data'+
     '    });'+
     '    window.targetAppEditor.targetCommentId && window.app.$emit("createSubComment");'+
-    '    window.targetAppEditor.$tips.suc("回复成功");'+
-    '    clearCommentContent();'+
+    '    window.targetAppEditor.$tips.suc("评论成功");'+
+    '    clearCommentContent(false, "reply");'+
+    '    $(o).remove();'+
+    '    window.initAppEditorArr();'+
+    '};'+
+    'function commentAddOk(o) { '+
+    '    var data = localStorage.getItem("commentBackData");'+
+    '    data = data == "0" ? false : JSON.parse(data);'+
+    '    if(!data || !window.targetAppEditor) return;'+
+    '    console.log(data, window.targetAppEditor);'+
+    '    window.targetAppEditor.$store.commit("SET_QUESTION_COMMENT_CREATED", {'+
+    '        newComment: data'+
+    '    });'+
+    '    window.targetAppEditor.$tips.suc("评论成功");'+
+    '    clearCommentContent(false, "add");'+
+    '    $(o).remove();'+
+    '    window.initAppEditorArr();'+
+    '};'+
+    'function commentUpdateOk(o) { '+
+    '    var data = localStorage.getItem("commentBackData"), cid = localStorage.getItem("commentId");'+
+    '    cid = cid == "0" ? false : cid;'+
+    '    data = data == "0" ? false : data;'+
+    '    console.log(data, cid, window.targetAppEditor);'+
+    '    if(!data || !window.targetAppEditor || !cid) return;'+
+    '    window.targetAppEditor.$store.commit("UPDATE_COMMENT", {'+
+    '        commentId: cid,'+
+    '        content: data'+
+    '    });'+
+    '    window.targetAppEditor.$tips.suc("修改成功");'+
+    '    clearCommentContent(false, "update");'+
     '    $(o).remove();'+
     '    window.initAppEditorArr();'+
     '};'+
@@ -215,25 +255,28 @@ var tips = function(msg, type, time){
     'window.loopAppEditorArr=(tar)=>{'+
     '   var tar = tar||window.app.$children;'+
     '   for(var i in tar){'+
-    '       /frm_control_group_textarea__focus/.test($(tar[i].$el).attr("class")) && window.answerAppEditorArrs.push({uid:tar[i]._uid, el:tar[i].$el, o:tar[i]});'+
-    '       /js_post_comment_item/.test($(tar[i].$el).attr("class")) && window.replyAppEditorArrs.push({uid:tar[i]._uid, el:tar[i].$el, o:tar[i]});'+
+    '       $(tar[i].$el).hasClass("mode__rich-text-editor") && window.answerAppRichEditorArrs.push({uid:tar[i]._uid, el:tar[i].$el, o:tar[i]});'+
+    '       $(tar[i].$el).hasClass("frm_control_group_textarea__focus") && window.answerAppEditorArrs.push({uid:tar[i]._uid, el:tar[i].$el, o:tar[i]});'+
+    '       $(tar[i].$el).hasClass("js_post_comment_item") && window.replyAppEditorArrs.push({uid:tar[i]._uid, el:tar[i].$el, o:tar[i]});'+
     '       if(tar[i].$children.length){'+
     '           window.loopAppEditorArr(tar[i].$children);'+
     '       }'+
     '   }'+
     '};'+
     'window.initAppEditorArr = function() {'+
+    '   window.answerAppRichEditorArrs = [];'+
     '   window.answerAppEditorArrs = [];'+
     '   window.replyAppEditorArrs = [];'+
     '   window.loopAppEditorArr();'+
     '};'+
     'function initClickReply() { '+
-    '    $("body").delegate(".js_comment.best_comment_discuss,.js_comment.post_opr_meta_comment_reply", "click", function(e){'+
+    '    $("body").delegate(".js_comment.best_comment_discuss,.js_comment.post_opr_meta_comment_reply,.mode__rich-text-editor .ql-editor,.post_comment_opr .post_opr_meta", "click", function(e){'+
     '        var t = this;'+
     '        (()=>{return new Promise((rs,rj)=>{'+
     '            window.initAppEditorArr();'+
     '            rs();'+
     '        })})().then(res=>{'+
+    '            console.log("initClickReply");'+
     '            window.targetAppEditor = false;'+
     '            if($(t).hasClass("best_comment_discuss")){'+
     '                for(var i in window.answerAppEditorArrs){'+
@@ -243,12 +286,58 @@ var tips = function(msg, type, time){
     '                        break;'+
     '                    }'+
     '                }'+
-    '            }else{'+
+    '            }else if($(t).hasClass("post_opr_meta_comment_reply")){'+
     '                for(var i in window.replyAppEditorArrs){'+
     '                    if($(t).parents("li[itemprop=\'comment\']").attr("id") === $(window.replyAppEditorArrs[i].el).attr("id")){'+
     '                        window.targetAppEditor = window.replyAppEditorArrs[i].o;'+
     '                        console.log("comment", window.targetAppEditor);'+
     '                        break;'+
+    '                    }'+
+    '                }'+
+    '            }else if($(t).hasClass("post_opr_meta")){'+
+    '                if($(t).find(".edit").length){'+
+    '                    var commentContent = !1, tmp = __INITIAL_STATE__ && __INITIAL_STATE__.doc && __INITIAL_STATE__.doc.Comments  && (__INITIAL_STATE__.doc.Comments.rows||[]);'+
+    '                    for(var i in tmp){'+
+    '                        if(__INITIAL_STATE__.user.openid == tmp[i].OpenId){'+
+    '                            commentContent = tmp[i].Content.replace(/display:([ ]+)?tail;/, "display: none;");'+
+    '                        }'+
+    '                    }'+
+    '                    for(var i in window.answerAppRichEditorArrs){'+
+    '                        if($(t).parents("li[itemprop=\'answer\']").attr("id") === $(window.answerAppRichEditorArrs[i].el).parents("li[itemprop=\'answer\']").attr("id")){'+
+    '                            window.targetAppEditor = window.answerAppRichEditorArrs[i].o;'+
+    '                            console.log("answerRichEidt", commentContent, window.targetAppEditor);'+
+    '                            if(commentContent !== !1 && window.targetAppEditor.setContent){'+
+    '                              $(window.targetAppEditor.$el).find(".ql-editor").html(commentContent);'+
+    '                            }'+
+    '                            break;'+
+    '                        }'+
+    '                    }'+
+    '                }'+
+    '            }else{'+
+    '                if($(t).parents("#comment-editor").length){'+
+    '                    for(var i in window.answerAppRichEditorArrs){'+
+    '                        if("comment-editor" === $(window.answerAppRichEditorArrs[i].el).attr("id")){'+
+    '                            window.targetAppEditor = window.answerAppRichEditorArrs[i].o;'+
+    '                            console.log("answerRich", window.targetAppEditor);'+
+    '                            break;'+
+    '                        }'+
+    '                    }'+
+    '                }else{'+
+    '                    var commentContent = !1, tmp = __INITIAL_STATE__ && __INITIAL_STATE__.doc && __INITIAL_STATE__.doc.Comments  && (__INITIAL_STATE__.doc.Comments.rows||[]);'+
+    '                    for(var i in tmp){'+
+    '                        if(__INITIAL_STATE__.user.openid == tmp[i].Openid){'+
+    '                            commentContent = tmp[i].Content.replace(/display:([ ]+)?tail;/, "display: none;");'+
+    '                        }'+
+    '                    }'+
+    '                    for(var i in window.answerAppRichEditorArrs){'+
+    '                        if($(t).parents("li[itemprop=\'answer\']").attr("id") === $(window.answerAppRichEditorArrs[i].el).parents("li[itemprop=\'answer\']").attr("id")){'+
+    '                            window.targetAppEditor = window.answerAppRichEditorArrs[i].o;'+
+    '                            console.log("answerRichEidt", window.targetAppEditor);'+
+    '                            if(commentContent !== !1 && window.targetAppEditor.setContent){'+
+    '                              $(window.targetAppEditor.$el).find(".ql-editor").html(commentContent);'+
+    '                            }'+
+    '                            break;'+
+    '                        }'+
     '                    }'+
     '                }'+
     '            }'+
@@ -442,6 +531,7 @@ var tips = function(msg, type, time){
         originX = e.pageX || e.clientX;
         originY = e.pageY || e.clientY;
         originElt = e.target || e.srcElement || {};
+        console.log(originElt)
     }, false);
 
     $('body').delegate('#wx-popoverWrapId', 'mouseenter', function(e){
@@ -594,17 +684,20 @@ chrome.extension.onRequest.addListener(async function(message, sender, sendRespo
         copy(message.text)
         tips(message.msg, 1)
     }else if(message.type == 'addComment'){
-        var data = {}, {formData = {}} = message.details.requestBody
+        var data = {}, formData = message.formData, url = message.url,
+        func = message.ops == 'add' ? 'commentAddOk' : (message.ops == 'reply' ? 'commentReplyOk' : 'commentUpdateOk')
         $('body').append('<img src="https://res.wx.qq.com/a/wx_fed/assets/res/NTI4MWU5.ico" onload=\'clearCommentContent(this)\' style="position:fixed;left:88888px;">')
         for(var i in formData){
             data[i] = formData[i][0]
         }
-        $.post(message.details.url+'&blockpassed=1', data, function(res){
+            console.log(message)
+        $.post(url+'&blockpassed=1', data, function(res){
             console.log(res.data)
-            localStorage.setItem('commentOBackData', res.success ? JSON.stringify(res.data) : 0)
-            res.success && setTimeout(()=>{
-                $('body').append('<img src="https://res.wx.qq.com/a/wx_fed/assets/res/NTI4MWU5.ico" onload=\'commentOk(this)\' style="position:fixed;left:88888px;">')
-            }, 500);
+            localStorage.setItem('commentBackData', res.success ? JSON.stringify(res.data) : 0)
+            localStorage.setItem('commentId', formData.CommentId ? formData.CommentId : 0)
+            res.success ? setTimeout(()=>{
+                $('body').append('<img src="https://res.wx.qq.com/a/wx_fed/assets/res/NTI4MWU5.ico" onload=\''+func+'(this)\' style="position:fixed;left:88888px;">')
+            }, 500) : tips('评论失败', 0);
         })
     }
 })

@@ -125,14 +125,34 @@
 
 	chrome.webRequest.onBeforeRequest.addListener(
 		function(details) {
-			if(/^https?:\/\/developers\.weixin\.qq\.com\/community\/ngi\/comment\/create/.test(details.url)){
+			
+			if(/^https?:\/\/developers\.weixin\.qq\.com\/community\/ngi\/comment\/(create|update)/.test(details.url)){
 				console.log(details);
 				if(/&blockpassed=/.test(details.url)){
 					return {}
 				}else{
-					if(/(【tail】|【t】|【T】|【Tail】|\[t\]|\[tail\]|\[Tail\]|\[T\])$/.test(details.requestBody.formData.Content[0].trim())){
-						details.requestBody.formData.Content[0] = details.requestBody.formData.Content[0].replace(/(【tail】|【t】|【T】|【Tail】|\[t\]|\[tail\]|\[Tail\]|\[T\])$/, "<p style=\"background: linear-gradient(45deg, red, yellow, rgb(204, 204, 255));font-size: 10px;color: transparent;-webkit-background-clip: text;border-top: 0.5px solid rgba(0,0,0,.06);padding-top: 5px;margin-top: 15px;\" title=\""+(window.commentTail ? '' : '若该回答帮助了你，就给个赞吧')+"\">"+(window.commentTail ? window.commentTail : '--↓↓👍点赞是回答的动力哦')+"</p>")
-						chrome.tabs.sendRequest(details.tabId, {type: 'addComment', details});
+					
+					var rex = /(【tail】|【t】|【T】|【Tail】|\[t\]|\[tail\]|\[Tail\]|\[T\])([ ]+)?(<\/[a-zA-Z0-9_]+>)?$/,
+					rex2 = /(【tail】|【t】|【T】|【Tail】|\[t\]|\[tail\]|\[Tail\]|\[T\])([ ]+)?(<\/[a-zA-Z0-9_]+>)/,
+					formData = details.requestBody.formData
+					content = formData.Content[0].trim(), tar = $('<div>'+content+'</div>'), tail = tar.find('p[title="tail"]'),
+					hasOldTail = !1, ops = 'update'
+					if(/^https?:\/\/developers\.weixin\.qq\.com\/community\/ngi\/comment\/create/.test(details.url)){
+						ops = formData.hasOwnProperty('TargetCommentId') ? 'reply' : 'add'
+					}
+					if(tail.length >= 1){
+						if(!rex.test(content) && rex2.test(content)){
+							tail.remove()
+							content = tar.html()
+						}
+						hasOldTail = !0
+					}
+					console.log(content, details.requestBody.formData);
+					if(rex.test(content) || hasOldTail){
+						content = content.replace(rex, "<p style=\"display: tail;background: linear-gradient(45deg, red, yellow, rgb(204, 204, 255));font-size: 10px;color: transparent;-webkit-background-clip: text;border-top: 0.5px solid rgba(0,0,0,.06);padding-top: 5px;margin-top: 15px;\" title=\"tail\">"+(window.commentTail ? window.commentTail : '--↓↓👍点赞是回答的动力哦')+"</p>")
+						hasOldTail && (content = content.replace(/<p style="display:([^;]+)?;/, '<p style="display: tail;'));
+						formData.Content[0] = content
+						chrome.tabs.sendRequest(details.tabId, {type: 'addComment', formData, url:details.url, ops});
 						return {cancel: true}
 					}
 					return {}

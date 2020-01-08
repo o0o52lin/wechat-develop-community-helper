@@ -175,18 +175,99 @@ var tips = function(msg, type, time){
     var pluginCode = '<textarea id="plugin-clipboard" style="position:fixed;left:99999px;"></textarea>'+
     '<script id="plugin-script">'+
     'function stopBubbleDefault(e) { '+
-    '    console.log(e);'+
     '    e && e.stopPropagation ? e.stopPropagation() : (window.event.cancelBubble = true);'+
     '    e && e.preventDefault ? e.preventDefault() : (window.event.returnValue = false);'+
     '    return false;'+
     '};'+
-    'function getBaseInfo() { '+
+    'function getBaseInfo(o) { '+
+    '    intervalFunction();'+
     '    window.postMessage({ type:"afterGetBaseInfo", data: typeof __INITIAL_STATE__ == "undefined"?{}:{__INITIAL_STATE__}}, "*");'+
+    '    document.body.removeChild(o);'+
+    '};'+
+    'function clearCommentContent(o) { '+
+    '    window.targetAppEditor.targetCommentL2 = null;'+
+    '    window.targetAppEditor.commentReplyValue = "";'+
+    '    window.targetAppEditor.input = "";'+
+    '    window.targetAppEditor.codeHtml = "";'+
+    '    window.targetAppEditor.imgList = [];'+
+    '    window.targetAppEditor.code = "";'+
+    '    window.targetAppEditor.inputvalue = "";'+
+    '    window.targetAppEditor.$refs.replyInput && window.targetAppEditor.$refs.replyInput.clearContent();'+
+    '    window.targetAppEditor.$refs.uploadImages && window.targetAppEditor.$refs.uploadImages.clearImg();'+
+    '    window.targetAppEditor.clearContent && window.targetAppEditor.clearContent();'+
+    '    o && $(o).remove();'+
+    '};'+
+    'function commentOk(o) { '+
+    '    var data = localStorage.getItem("commentOBackData");'+
+    '    data = data == "0" ? false : JSON.parse(data);'+
+    '    if(!data || !window.targetAppEditor) return;'+
+    '    console.log(data, window.targetAppEditor);'+
+    '    window.targetAppEditor.$store.commit("SET_COMMENT_CREATED", {'+
+    '        newComment: data'+
+    '    });'+
+    '    window.targetAppEditor.targetCommentId && window.app.$emit("createSubComment");'+
+    '    window.targetAppEditor.$tips.suc("回复成功");'+
+    '    clearCommentContent();'+
+    '    $(o).remove();'+
+    '    window.initAppEditorArr();'+
+    '};'+
+    'window.targetAppEditor = false;'+
+    'window.loopAppEditorArr=(tar)=>{'+
+    '   var tar = tar||window.app.$children;'+
+    '   for(var i in tar){'+
+    '       /frm_control_group_textarea__focus/.test($(tar[i].$el).attr("class")) && window.answerAppEditorArrs.push({uid:tar[i]._uid, el:tar[i].$el, o:tar[i]});'+
+    '       /js_post_comment_item/.test($(tar[i].$el).attr("class")) && window.replyAppEditorArrs.push({uid:tar[i]._uid, el:tar[i].$el, o:tar[i]});'+
+    '       if(tar[i].$children.length){'+
+    '           window.loopAppEditorArr(tar[i].$children);'+
+    '       }'+
+    '   }'+
+    '};'+
+    'window.initAppEditorArr = function() {'+
+    '   window.answerAppEditorArrs = [];'+
+    '   window.replyAppEditorArrs = [];'+
+    '   window.loopAppEditorArr();'+
+    '};'+
+    'function initClickReply() { '+
+    '    $("body").delegate(".js_comment.best_comment_discuss,.js_comment.post_opr_meta_comment_reply", "click", function(e){'+
+    '        var t = this;'+
+    '        (()=>{return new Promise((rs,rj)=>{'+
+    '            window.initAppEditorArr();'+
+    '            rs();'+
+    '        })})().then(res=>{'+
+    '            window.targetAppEditor = false;'+
+    '            if($(t).hasClass("best_comment_discuss")){'+
+    '                for(var i in window.answerAppEditorArrs){'+
+    '                    if($(t).parents("li[itemprop=\'answer\']").attr("id") === $(window.answerAppEditorArrs[i].el).parents("li").attr("id")){'+
+    '                        window.targetAppEditor = window.answerAppEditorArrs[i].o;'+
+    '                        console.log("answer", window.targetAppEditor);'+
+    '                        break;'+
+    '                    }'+
+    '                }'+
+    '            }else{'+
+    '                for(var i in window.replyAppEditorArrs){'+
+    '                    if($(t).parents("li[itemprop=\'comment\']").attr("id") === $(window.replyAppEditorArrs[i].el).attr("id")){'+
+    '                        window.targetAppEditor = window.replyAppEditorArrs[i].o;'+
+    '                        console.log("comment", window.targetAppEditor);'+
+    '                        break;'+
+    '                    }'+
+    '                }'+
+    '            }'+
+    '        });'+
+    '    });'+
+    '};'+
+    'function intervalFunction() { '+
+    '    var h = setInterval(()=>{'+
+    '        if(window.app && window.app.$children){'+
+    '           clearInterval(h);'+
+    '           initClickReply();'+
+    '           setTimeout(()=>{window.initAppEditorArr();}, 1000);'+
+    '        }'+
+    '    }, 1000);'+
     '};'+
     '</script>'
     $('body').append(pluginCode)
     setTimeout(()=>{
-        $('body').append('<img src="https://res.wx.qq.com/a/wx_fed/assets/res/NTI4MWU5.ico" onload="getBaseInfo()" style="position:fixed;left:88888px;">')
+        $('body').append('<img src="https://res.wx.qq.com/a/wx_fed/assets/res/NTI4MWU5.ico" onload="getBaseInfo(this)" style="position:fixed;left:88888px;">')
     }, 1000)
 
     // 黑名单逻辑，对应blankListFunc
@@ -273,7 +354,6 @@ var tips = function(msg, type, time){
         this.getRect = function(){
             var sel = this.getTextSelection(),
             rect = sel.getRangeAt(0).getClientRects()[0]
-            console.log(rect)
             return {
                 x: (rect.right - rect.width/2)+(document.documentElement.scrollLeft || document.body.scrollLeft),
                 y: (rect.top + rect.height/2)+(document.documentElement.scrollTop || document.body.scrollTop)+10
@@ -320,9 +400,9 @@ var tips = function(msg, type, time){
                 }
                 
 
-                chrome.storage.local.get('autoSearch', function (ret) {
-                    ret.autoSearch && quickSearch()
-                })
+                chrome.extension.sendMessage({cmd: 'getAutoSearch'}, (res)=>{
+                    res.autoSearch && quickSearch()
+                });
 
                 searchEl.style.left = rect.x + 'px';
                 searchEl.style.top = rect.y + 'px';
@@ -331,7 +411,7 @@ var tips = function(msg, type, time){
 
                 $(searchEl).data('closeHandle', setTimeout(()=>{
                     textObj.close()
-                }, 3e3))
+                }, 1e3))
             }
         };
         this.close = function() {
@@ -373,8 +453,9 @@ var tips = function(msg, type, time){
     $('body').delegate('#wx-popoverWrapId', 'mouseleave', function(e){
         $(this).data('closeHandle', setTimeout(function () {
           textObj.close()
-        }, 1e3))
+        }, 500))
     })
+
 
 
 
@@ -453,6 +534,7 @@ var tips = function(msg, type, time){
                 }, 1000)
             }
         }
+        
     })
 
 })(window, window.document, jQuery);
@@ -511,5 +593,18 @@ chrome.extension.onRequest.addListener(async function(message, sender, sendRespo
     }else if(message.type == 'copy'){
         copy(message.text)
         tips(message.msg, 1)
+    }else if(message.type == 'addComment'){
+        var data = {}, {formData = {}} = message.details.requestBody
+        $('body').append('<img src="https://res.wx.qq.com/a/wx_fed/assets/res/NTI4MWU5.ico" onload=\'clearCommentContent(this)\' style="position:fixed;left:88888px;">')
+        for(var i in formData){
+            data[i] = formData[i][0]
+        }
+        $.post(message.details.url+'&blockpassed=1', data, function(res){
+            console.log(res.data)
+            localStorage.setItem('commentOBackData', res.success ? JSON.stringify(res.data) : 0)
+            res.success && setTimeout(()=>{
+                $('body').append('<img src="https://res.wx.qq.com/a/wx_fed/assets/res/NTI4MWU5.ico" onload=\'commentOk(this)\' style="position:fixed;left:88888px;">')
+            }, 500);
+        })
     }
 })

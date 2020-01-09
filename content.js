@@ -191,10 +191,16 @@ var tips = function(msg, type, time){
     '       tar.targetComment = null;'+
     '       tar.targetCommentId = "";'+
     '       tar.$refs.questionCommentEditor && tar.$refs.questionCommentEditor.setContent("");'+
+    '       tar.setContent && tar.setContent("");'+
+    '       tar.$parent._update && tar.$parent._update(tar.$parent, false);'+
+    '       console.log(t,tar);'+
     '    }else if(t == "update"){'+
     '       tar.modifying = !1;'+
     '       tar.commentReplyValue = "";'+
     '       tar.$refs.modifyCommentEditor && tar.$refs.modifyCommentEditor.setContent("");'+
+    '       tar.setContent && tar.setContent("");'+
+    '       tar.$parent._update && tar.$parent._update(tar.$parent.$vnode, false);'+
+    '       console.log(t,tar);'+
     '    }else{'+
     '       tar.targetCommentL2 = null;'+
     '       tar.commentReplyValue = "";'+
@@ -211,7 +217,13 @@ var tips = function(msg, type, time){
     '};'+
     'function commentReplyOk(o) { '+
     '    var data = localStorage.getItem("commentBackData");'+
-    '    data = data == "0" ? false : JSON.parse(data);'+
+    '    try{'+
+    '        data = JSON.parse(data);'+
+    '    }catch(e){'+
+    '        console.error(e);'+
+    '        return;'+
+    '    }'+
+    '    data = data.comment ? data.comment : false;'+
     '    if(!data || !window.targetAppEditor) return;'+
     '    console.log(data, window.targetAppEditor);'+
     '    window.targetAppEditor.$store.commit("SET_COMMENT_CREATED", {'+
@@ -225,10 +237,16 @@ var tips = function(msg, type, time){
     '};'+
     'function commentAddOk(o) { '+
     '    var data = localStorage.getItem("commentBackData");'+
-    '    data = data == "0" ? false : JSON.parse(data);'+
+    '    try{'+
+    '        data = JSON.parse(data);'+
+    '    }catch(e){'+
+    '        console.error(e);'+
+    '        return;'+
+    '    }'+
+    '    data = data.comment ? data.comment : false;'+
     '    if(!data || !window.targetAppEditor) return;'+
     '    console.log(data, window.targetAppEditor);'+
-    '    window.targetAppEditor.$store.commit("SET_QUESTION_COMMENT_CREATED", {'+
+    '    window.targetAppEditor.$store.commit("SET_COMMENT_CREATED", {'+
     '        newComment: data'+
     '    });'+
     '    window.targetAppEditor.$tips.suc("评论成功");'+
@@ -237,15 +255,27 @@ var tips = function(msg, type, time){
     '    window.initAppEditorArr();'+
     '};'+
     'function commentUpdateOk(o) { '+
-    '    var data = localStorage.getItem("commentBackData"), cid = localStorage.getItem("commentId");'+
-    '    cid = cid == "0" ? false : cid;'+
-    '    data = data == "0" ? false : data;'+
+    '    var data = localStorage.getItem("commentBackData"), cid = !1;'+
+    '    try{'+
+    '        data = JSON.parse(data);'+
+    '    }catch(e){'+
+    '        console.error(e);'+
+    '        return;'+
+    '    }'+
+    '    cid = data.commentId || false;'+
+    '    data = data.comment ? data.comment : false;'+
     '    console.log(data, cid, window.targetAppEditor);'+
     '    if(!data || !window.targetAppEditor || !cid) return;'+
     '    window.targetAppEditor.$store.commit("UPDATE_COMMENT", {'+
     '        commentId: cid,'+
     '        content: data'+
     '    });'+
+    '    for(var i in tmp = __INITIAL_STATE__.doc.Comments.rows){'+
+    '        if(tmp[i].CommentId == cid){'+
+    '            __INITIAL_STATE__.doc.Comments.rows[i].Content = data;'+
+    '            break;'+
+    '        }'+
+    '    }'+
     '    window.targetAppEditor.$tips.suc("修改成功");'+
     '    clearCommentContent(false, "update");'+
     '    $(o).remove();'+
@@ -255,6 +285,7 @@ var tips = function(msg, type, time){
     'window.loopAppEditorArr=(tar)=>{'+
     '   var tar = tar||window.app.$children;'+
     '   for(var i in tar){'+
+    '       if($(tar[i].$el).hasClass("answer_container") || $(tar[i].$el).hasClass("anwsers__list")){console.log(tar[i]);};'+
     '       $(tar[i].$el).hasClass("mode__rich-text-editor") && window.answerAppRichEditorArrs.push({uid:tar[i]._uid, el:tar[i].$el, o:tar[i]});'+
     '       $(tar[i].$el).hasClass("frm_control_group_textarea__focus") && window.answerAppEditorArrs.push({uid:tar[i]._uid, el:tar[i].$el, o:tar[i]});'+
     '       $(tar[i].$el).hasClass("js_post_comment_item") && window.replyAppEditorArrs.push({uid:tar[i]._uid, el:tar[i].$el, o:tar[i]});'+
@@ -693,8 +724,7 @@ chrome.extension.onRequest.addListener(async function(message, sender, sendRespo
             console.log(message)
         $.post(url+'&blockpassed=1', data, function(res){
             console.log(res.data)
-            localStorage.setItem('commentBackData', res.success ? JSON.stringify(res.data) : 0)
-            localStorage.setItem('commentId', formData.CommentId ? formData.CommentId : 0)
+            localStorage.setItem('commentBackData', JSON.stringify({type: message.ops, comment:res.success ? res.data : 0, commentId:formData.CommentId ? formData.CommentId : 0}) )
             res.success ? setTimeout(()=>{
                 $('body').append('<img src="https://res.wx.qq.com/a/wx_fed/assets/res/NTI4MWU5.ico" onload=\''+func+'(this)\' style="position:fixed;left:88888px;">')
             }, 500) : tips('评论失败', 0);

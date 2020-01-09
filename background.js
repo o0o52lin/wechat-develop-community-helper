@@ -78,7 +78,7 @@
 					data = (data || '').trim()
 
 					var text = '<p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:16s;background-color:skyblue;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:250px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:17s;background-color:red;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:5px;border-radius:10%;display:inline-block;">赞</p><p style="width: 0px!important;height: 0px!important;"><br></p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:15s;background-color:green;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:230px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:18s;background-color:orange;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:42px;border-radius:10%;display:inline-block;">赞</p><p style="width: 0px!important;height: 0px!important;"><br></p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:11s;background-color:green;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:80px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:12s;background-color:skyblue;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:5px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:13s;background-color:red;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:5px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:14s;background-color:orange;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:5px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:19s;background-color:green;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:64px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:20s;background-color:skyblue;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:5px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:21s;background-color:red;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:5px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:22s;background-color:orange;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:5px;border-radius:10%;display:inline-block;">赞</p><p style="width: 0px!important;height: 0px!important;"><br></p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:10s;background-color:orange;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:80px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:1s;background-color:red;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:41px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:23s;background-color:green;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:246px;border-radius:10%;display:inline-block;">赞</p><p style="width: 0px!important;height: 0px!important;"><br></p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:9s;background-color:red;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:80px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:2s;background-color:orange;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:41px;border-radius:10%;display:inline-block;">赞</p><p style="color: #000;padding:6px 10px;margin-left: 0;margin-bottom:5px;display:inline-block;width:228px;text-align:center;">'+(data||'给你一个大大的赞')+'</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:24s;background-color:skyblue;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:0;border-radius:10%;display:inline-block;">赞</p><p style="width: 0px!important;height: 0px!important;"><br></p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:8s;background-color:skyblue;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:80px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:3s;background-color:green;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:41px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:25s;background-color:red;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:221px;border-radius:10%;display:inline-block;">赞</p><p style="width: 0px!important;height: 0px!important;"><br></p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:7s;background-color:green;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:80px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:4s;background-color:skyblue;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:41px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:26s;background-color:orange;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:204px;border-radius:10%;display:inline-block;">赞</p><p style="width: 0px!important;height: 0px!important;"><br></p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:6s;background-color:orange;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:80px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:5s;background-color:red;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:5px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:32s;background-color:skyblue;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:5px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:31s;background-color:green;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:5px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:30s;background-color:orange;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:5px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:29s;background-color:red;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:5px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:28s;background-color:skyblue;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:5px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:27s;background-color:green;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:5px;border-radius:10%;display:inline-block;">赞</p>'
-			        chrome.tabs.sendRequest(tab[0].id, {type: 'copy', text, msg:'复制成功，粘贴即可', tab:tab[0]});
+			        data != '' && chrome.tabs.sendRequest(tab[0].id, {type: 'copy', text, msg:'复制成功，粘贴即可', tab:tab[0]});
 			    })
 			}, "documentUrlPatterns": ['*://developers.weixin.qq.com/*']})
 			return this.txdzmid
@@ -88,9 +88,9 @@
 			this.txdzmid = this.commentTailmid ? this.commentTailmid : chrome.contextMenus.create({"parentId": menus.baseMid(), "title": '设置回答小尾巴', "contexts": ['all'], "onclick": (e)=>{
 				chrome.tabs.query({active:true}, function(tab) {
 					var data = window.prompt('设置回答小尾巴(非必填，默认"--↓↓👍点赞是回答的动力哦")\r\n回答内容末尾加 特定标识 即可自动带小尾巴\r\n特定标识有：[t]、[T]、[tail]、[Tail]、【t】、【T】、【tail】、【Tail】', (window.commentTail ? window.commentTail : '--↓↓👍点赞是回答的动力哦'))
-					data = (data || '').trim()
-					updateCommentTail(data)
-			        chrome.tabs.sendRequest(tab[0].id, {type: 'alert', ok: 1, msg:'设置成功'});
+					data = (data || '').trim();
+					updateCommentTail(data);
+			        data != '' && chrome.tabs.sendRequest(tab[0].id, {type: 'alert', ok: 1, msg:'设置成功'});
 			    })
 			}, "documentUrlPatterns": ['*://developers.weixin.qq.com/*']})
 			return this.commentTailmid
@@ -128,33 +128,37 @@
 			
 			if(/^https?:\/\/developers\.weixin\.qq\.com\/community\/ngi\/comment\/(create|update)/.test(details.url)){
 				console.log(details);
+				chrome.tabs.insertCSS(details.tabId, {code: '.page_tips.error{display:none;}'});
 				if(/&blockpassed=/.test(details.url)){
 					return {}
 				}else{
 					
-					var rex = /(【tail】|【t】|【T】|【Tail】|\[t\]|\[tail\]|\[Tail\]|\[T\])([ ]+)?(<\/[a-zA-Z0-9_]+>)?$/,
-					rex2 = /(【tail】|【t】|【T】|【Tail】|\[t\]|\[tail\]|\[Tail\]|\[T\])([ ]+)?(<\/[a-zA-Z0-9_]+>)/,
-					formData = details.requestBody.formData
+					var rex = /(【tail】|【t】|【T】|【Tail】|\[t\]|\[tail\]|\[Tail\]|\[T\])/,
+					rex2 = /(【tail】|【t】|【T】|【Tail】|\[t\]|\[tail\]|\[Tail\]|\[T\])/g,
+					formData = details.requestBody.formData,
 					content = formData.Content[0].trim(), tar = $('<div>'+content+'</div>'), tail = tar.find('p[title="tail"]'),
-					hasOldTail = !1, ops = 'update'
+					txt = tar.text().trim(), hasTailMark = rex.test(txt),
+					hasOldTail = tail.length >= 1 ? !0 : !1, ops = 'update'
 					if(/^https?:\/\/developers\.weixin\.qq\.com\/community\/ngi\/comment\/create/.test(details.url)){
 						ops = formData.hasOwnProperty('TargetCommentId') ? 'reply' : 'add'
 					}
-					if(tail.length >= 1){
-						if(!rex.test(content) && rex2.test(content)){
-							tail.remove()
-							content = tar.html()
-						}
-						hasOldTail = !0
+					if(hasOldTail && hasTailMark){
+						tail.remove()
+						content = tar.html()
 					}
 					console.log(content, details.requestBody.formData);
-					if(rex.test(content) || hasOldTail){
-						content = content.replace(rex, "<p style=\"display: tail;background: linear-gradient(45deg, red, yellow, rgb(204, 204, 255));font-size: 10px;color: transparent;-webkit-background-clip: text;border-top: 0.5px solid rgba(0,0,0,.06);padding-top: 5px;margin-top: 15px;\" title=\"tail\">"+(window.commentTail ? window.commentTail : '--↓↓👍点赞是回答的动力哦')+"</p>")
+					if(hasTailMark || hasOldTail){
+
+						content = content.replace(rex2, '')
+						hasTailMark && (content += "<p style=\"display: tail;background: linear-gradient(45deg, red, yellow, rgb(204, 204, 255));font-size: 10px;color: transparent;-webkit-background-clip: text;border-top: 0.5px solid rgba(0,0,0,.06);padding-top: 5px;margin-top: 15px;\" title=\"tail\">"+(window.commentTail ? window.commentTail : '--↓↓👍点赞是回答的动力哦')+"</p>")
 						hasOldTail && (content = content.replace(/<p style="display:([^;]+)?;/, '<p style="display: tail;'));
 						formData.Content[0] = content
+
 						chrome.tabs.sendRequest(details.tabId, {type: 'addComment', formData, url:details.url, ops});
+						
 						return {cancel: true}
 					}
+					setTimeout(()=>chrome.tabs.insertCSS(details.tabId, {code: '.page_tips.error{display:block;}'}), 1000);
 					return {}
 				}
 			}

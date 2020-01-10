@@ -255,7 +255,7 @@ var tips = function(msg, type, time){
     '    window.initAppEditorArr();'+
     '};'+
     'function commentUpdateOk(o) { '+
-    '    var data = localStorage.getItem("commentBackData"), cid = !1;'+
+    '    var data = localStorage.getItem("commentBackData"), cid = !1, comment = !1;'+
     '    try{'+
     '        data = JSON.parse(data);'+
     '    }catch(e){'+
@@ -263,21 +263,24 @@ var tips = function(msg, type, time){
     '        return;'+
     '    }'+
     '    cid = data.commentId || false;'+
-    '    data = data.comment ? data.comment : false;'+
-    '    console.log(data, cid, window.targetAppEditor);'+
+    '    comment = data.comment ? data.comment : false;'+
+    '    console.log(comment, cid, window.targetAppEditor);'+
     '    if(!data || !window.targetAppEditor || !cid) return;'+
-    '    window.targetAppEditor.$store.commit("UPDATE_COMMENT", {'+
-    '        commentId: cid,'+
-    '        content: data'+
-    '    });'+
+    '    var tarComment = false;'+
     '    for(var i in tmp = __INITIAL_STATE__.doc.Comments.rows){'+
     '        if(tmp[i].CommentId == cid){'+
-    '            __INITIAL_STATE__.doc.Comments.rows[i].Content = data;'+
+    '            __INITIAL_STATE__.doc.Comments.rows[i].Content = comment;'+
     '            break;'+
     '        }'+
     '    }'+
+    '    window.targetAppEditor.$store.commit("UPDATE_COMMENT", {'+
+    '        commentId: cid,'+
+    '        content: comment'+
+    '    });'+
     '    window.targetAppEditor.$tips.suc("修改成功");'+
     '    clearCommentContent(false, "update");'+
+    '    data.docId && '+
+    '    setTimeout(()=>{window.location.href="https://developers.weixin.qq.com/community/develop/doc/"+data.docId+"?_="+(new Date().valueOf())+"#"+cid;}, 1000);'+
     '    $(o).remove();'+
     '    window.initAppEditorArr();'+
     '};'+
@@ -285,7 +288,7 @@ var tips = function(msg, type, time){
     'window.loopAppEditorArr=(tar)=>{'+
     '   var tar = tar||window.app.$children;'+
     '   for(var i in tar){'+
-    '       if($(tar[i].$el).hasClass("answer_container") || $(tar[i].$el).hasClass("anwsers__list")){console.log(tar[i]);};'+
+    '       if($(tar[i].$el).hasClass("edui-default")){console.log(tar[i]);};'+
     '       $(tar[i].$el).hasClass("mode__rich-text-editor") && window.answerAppRichEditorArrs.push({uid:tar[i]._uid, el:tar[i].$el, o:tar[i]});'+
     '       $(tar[i].$el).hasClass("frm_control_group_textarea__focus") && window.answerAppEditorArrs.push({uid:tar[i]._uid, el:tar[i].$el, o:tar[i]});'+
     '       $(tar[i].$el).hasClass("js_post_comment_item") && window.replyAppEditorArrs.push({uid:tar[i]._uid, el:tar[i].$el, o:tar[i]});'+
@@ -329,15 +332,16 @@ var tips = function(msg, type, time){
     '                if($(t).find(".edit").length){'+
     '                    var commentContent = !1, tmp = __INITIAL_STATE__ && __INITIAL_STATE__.doc && __INITIAL_STATE__.doc.Comments  && (__INITIAL_STATE__.doc.Comments.rows||[]);'+
     '                    for(var i in tmp){'+
-    '                        if(__INITIAL_STATE__.user.openid == tmp[i].OpenId){'+
+    '                        if($(t).parents("li[itemprop=\'answer\']").attr("id") == tmp[i].CommentId){'+
     '                            commentContent = tmp[i].Content.replace(/display:([ ]+)?tail;/, "display: none;");'+
+    '                            break;'+
     '                        }'+
     '                    }'+
     '                    for(var i in window.answerAppRichEditorArrs){'+
     '                        if($(t).parents("li[itemprop=\'answer\']").attr("id") === $(window.answerAppRichEditorArrs[i].el).parents("li[itemprop=\'answer\']").attr("id")){'+
     '                            window.targetAppEditor = window.answerAppRichEditorArrs[i].o;'+
     '                            console.log("answerRichEidt", commentContent, window.targetAppEditor);'+
-    '                            if(commentContent !== !1 && window.targetAppEditor.setContent){'+
+    '                            if(commentContent !== !1){'+
     '                              $(window.targetAppEditor.$el).find(".ql-editor").html(commentContent);'+
     '                            }'+
     '                            break;'+
@@ -354,17 +358,19 @@ var tips = function(msg, type, time){
     '                        }'+
     '                    }'+
     '                }else{'+
-    '                    var commentContent = !1, tmp = __INITIAL_STATE__ && __INITIAL_STATE__.doc && __INITIAL_STATE__.doc.Comments  && (__INITIAL_STATE__.doc.Comments.rows||[]);'+
+    '                    var commentContent = !1, hasTail = !1, tmp = __INITIAL_STATE__ && __INITIAL_STATE__.doc && __INITIAL_STATE__.doc.Comments  && (__INITIAL_STATE__.doc.Comments.rows||[]);'+
     '                    for(var i in tmp){'+
-    '                        if(__INITIAL_STATE__.user.openid == tmp[i].Openid){'+
+    '                        if($(t).parents("li[itemprop=\'answer\']").attr("id") == tmp[i].CommentId){'+
+    '                            hasTail = /display:([ ]+)?tail;/.test(tmp[i].Content) || $("<div>"+tmp[i].Content+"</div>").find("p[title=tail]").length;'+
     '                            commentContent = tmp[i].Content.replace(/display:([ ]+)?tail;/, "display: none;");'+
+    '                            break;'+
     '                        }'+
     '                    }'+
     '                    for(var i in window.answerAppRichEditorArrs){'+
     '                        if($(t).parents("li[itemprop=\'answer\']").attr("id") === $(window.answerAppRichEditorArrs[i].el).parents("li[itemprop=\'answer\']").attr("id")){'+
     '                            window.targetAppEditor = window.answerAppRichEditorArrs[i].o;'+
-    '                            console.log("answerRichEidt", window.targetAppEditor);'+
-    '                            if(commentContent !== !1 && window.targetAppEditor.setContent){'+
+    '                            console.log("answerRichEidt", commentContent, window.targetAppEditor);'+
+    '                            if(commentContent !== !1 && hasTail && $(window.targetAppEditor.$el).find(".ql-editor").find("p[title=tail]").length <= 0){'+
     '                              $(window.targetAppEditor.$el).find(".ql-editor").html(commentContent);'+
     '                            }'+
     '                            break;'+
@@ -562,7 +568,8 @@ var tips = function(msg, type, time){
         originX = e.pageX || e.clientX;
         originY = e.pageY || e.clientY;
         originElt = e.target || e.srcElement || {};
-        console.log(originElt)
+        console.log(originElt, $(originElt).attr('class'))
+
     }, false);
 
     $('body').delegate('#wx-popoverWrapId', 'mouseenter', function(e){
@@ -715,16 +722,13 @@ chrome.extension.onRequest.addListener(async function(message, sender, sendRespo
         copy(message.text)
         tips(message.msg, 1)
     }else if(message.type == 'addComment'){
-        var data = {}, formData = message.formData, url = message.url,
+        var formData = message.formData, url = message.url,
         func = message.ops == 'add' ? 'commentAddOk' : (message.ops == 'reply' ? 'commentReplyOk' : 'commentUpdateOk')
-        $('body').append('<img src="https://res.wx.qq.com/a/wx_fed/assets/res/NTI4MWU5.ico" onload=\'clearCommentContent(this)\' style="position:fixed;left:88888px;">')
-        for(var i in formData){
-            data[i] = formData[i][0]
-        }
-            console.log(message)
-        $.post(url+'&blockpassed=1', data, function(res){
+        message.ops == 'reply' && $('body').append('<img src="https://res.wx.qq.com/a/wx_fed/assets/res/NTI4MWU5.ico" onload=\'clearCommentContent(this)\' style="position:fixed;left:88888px;">');
+        console.log(message)
+        $.post(url+'&blockpassed=1', formData, function(res){
             console.log(res.data)
-            localStorage.setItem('commentBackData', JSON.stringify({type: message.ops, comment:res.success ? res.data : 0, commentId:formData.CommentId ? formData.CommentId : 0}) )
+            localStorage.setItem('commentBackData', JSON.stringify({type: message.ops, docId: formData.docId, comment:res.success ? res.data : 0, commentId:formData.CommentId ? formData.CommentId : 0}) )
             res.success ? setTimeout(()=>{
                 $('body').append('<img src="https://res.wx.qq.com/a/wx_fed/assets/res/NTI4MWU5.ico" onload=\''+func+'(this)\' style="position:fixed;left:88888px;">')
             }, 500) : tips('评论失败', 0);

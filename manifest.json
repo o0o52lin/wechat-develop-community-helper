@@ -11,7 +11,7 @@
    "content_scripts": [ {
       "all_frames": true,
       "css": [ "content.css" ],
-      "js": [ "js/jquery.min.js", "content.js" ],
+      "js": [ "js/jquery.min.js", "content.js"],
       "matches": [ "http://*/*", "https://*/*", "file://*" ],
       "run_at": "document_idle"
    } ],
@@ -23,7 +23,7 @@
    },
    "manifest_version": 2,
    "name": "微信开发者社区小助手",
-   "permissions": [ "tabs", "contextMenus", "storage", "activeTab", "*://developers.weixin.qq.com/*","clipboardWrite", "webRequest", "webRequestBlocking" ],
+   "permissions": [ "tabs", "contextMenus", "storage", "activeTab", "*://developers.weixin.qq.com/*", "clipboardWrite", "webRequest", "webRequestBlocking" ],
    "short_name": "社区小助手",
    "version": "1.0.0"
 }

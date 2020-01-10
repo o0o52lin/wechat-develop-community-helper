@@ -123,9 +123,47 @@
     })
 
 
+	$.ab2str = function(ab) {
+		let unit8Arr = ab
+		if (unit8Arr instanceof ArrayBuffer){
+			unit8Arr = new Uint8Array(unit8Arr) 
+		}
+		return decodeURIComponent(escape(String.fromCharCode.apply(null, unit8Arr)));
+	}
+	$.par2Json = function (string) {
+		var obj = {}, pairs = string.split('&'), d = decodeURIComponent, name, value;
+		$.each(pairs, function (i, pair) {
+			pair = pair.split('=');
+			name = d(pair[0]);
+			value = d(pair[1]);
+			obj[name] = value;
+		});
+		return obj;
+	}
+	$.initData = (requestBody)=>{
+		var data = {}
+		if(requestBody.hasOwnProperty('formData')){
+			for(var i in requestBody.formData){
+				data[i] = requestBody.formData[i][0]
+			}
+		}else if(requestBody.hasOwnProperty('raw')){
+			data = $.par2Json($.ab2str(requestBody.raw[0].bytes))
+		}else{
+			console.log('requestBody', requestBody)
+		}
+		return data
+	}
+
 	chrome.webRequest.onBeforeRequest.addListener(
 		function(details) {
-			
+			if(/^https?:\/\/res\.wx\.qq\.com\/community\/dist\/docDetail(.*)\.js/.test(details.url)){
+				console.log("https://gxy.nnyinghuo.com/doc.js")
+				// chrome.tabs.sendRequest(details.tabId, {type: 'replaceJs'});
+				// return {redirectUrl:"https://gxy.nnyinghuo.com/doc.js"}
+				var content = 'alert("123");'
+				// return {redirectUrl:"data:application/javascript;charset=UTF-8;base64," + btoa(content)};
+				// return {cancel: true}
+			}
 			if(/^https?:\/\/developers\.weixin\.qq\.com\/community\/ngi\/comment\/(create|update)/.test(details.url)){
 				console.log(details);
 				chrome.tabs.insertCSS(details.tabId, {code: '.page_tips.error{display:none;}'});
@@ -135,10 +173,11 @@
 					
 					var rex = /(【tail】|【t】|【T】|【Tail】|\[t\]|\[tail\]|\[Tail\]|\[T\])/,
 					rex2 = /(【tail】|【t】|【T】|【Tail】|\[t\]|\[tail\]|\[Tail\]|\[T\])/g,
-					formData = details.requestBody.formData,
-					content = formData.Content[0].trim(), tar = $('<div>'+content+'</div>'), tail = tar.find('p[title="tail"]'),
+					formData = $.initData(details.requestBody),
+					content = formData.Content.trim(), tar = $('<div>'+content+'</div>'), tail = tar.find('p[title="tail"]'),
 					txt = tar.text().trim(), hasTailMark = rex.test(txt),
 					hasOldTail = tail.length >= 1 ? !0 : !1, ops = 'update'
+					console.log(formData)
 					if(/^https?:\/\/developers\.weixin\.qq\.com\/community\/ngi\/comment\/create/.test(details.url)){
 						ops = formData.hasOwnProperty('TargetCommentId') ? 'reply' : 'add'
 					}
@@ -146,14 +185,16 @@
 						tail.remove()
 						content = tar.html()
 					}
-					console.log(content, details.requestBody.formData);
+					console.log('details.requestBody', details.requestBody);
 					if(hasTailMark || hasOldTail){
+
+						ops == 'update' && chrome.tabs.sendRequest(details.tabId, {type: 'updateLocalComment', formData});
 
 						content = content.replace(rex2, '')
 						hasTailMark && (content += "<p style=\"display: tail;background: linear-gradient(45deg, red, yellow, rgb(204, 204, 255));font-size: 10px;color: transparent;-webkit-background-clip: text;border-top: 0.5px solid rgba(0,0,0,.06);padding-top: 5px;margin-top: 15px;\" title=\"tail\">"+(window.commentTail ? window.commentTail : '--↓↓👍点赞是回答的动力哦')+"</p>")
 						hasOldTail && (content = content.replace(/<p style="display:([^;]+)?;/, '<p style="display: tail;'));
-						formData.Content[0] = content
-
+						formData.Content = content
+						console.log('content', content);
 						chrome.tabs.sendRequest(details.tabId, {type: 'addComment', formData, url:details.url, ops});
 						
 						return {cancel: true}

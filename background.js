@@ -156,14 +156,6 @@
 
 	chrome.webRequest.onBeforeRequest.addListener(
 		function(details) {
-			if(/^https?:\/\/res\.wx\.qq\.com\/community\/dist\/docDetail(.*)\.js/.test(details.url)){
-				console.log("https://gxy.nnyinghuo.com/doc.js")
-				// chrome.tabs.sendRequest(details.tabId, {type: 'replaceJs'});
-				// return {redirectUrl:"https://gxy.nnyinghuo.com/doc.js"}
-				var content = 'alert("123");'
-				// return {redirectUrl:"data:application/javascript;charset=UTF-8;base64," + btoa(content)};
-				// return {cancel: true}
-			}
 			if(/^https?:\/\/developers\.weixin\.qq\.com\/community\/ngi\/comment\/(create|update)/.test(details.url)){
 				console.log(details);
 				chrome.tabs.insertCSS(details.tabId, {code: '.page_tips.error{display:none;}'});

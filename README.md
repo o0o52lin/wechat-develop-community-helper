@@ -1,4 +1,4 @@
 # wechat-develop-community-helper
 wechat-community-helper is a helper plugin of wechat develop community 
 
-![](https://wx.qlogo.cn/mmhead/SQd7RF5caa0auWTutcYHK1knvrCVzYKBaYAbkDDvDaPnJ5XnXRedPQ/0)
+![](https://raw.githubusercontent.com/o0o52lin/wechat-develop-community-helper/master/imgs/123.png)

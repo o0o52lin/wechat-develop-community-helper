@@ -162,12 +162,29 @@
 				if(/&blockpassed=/.test(details.url)){
 					return {}
 				}else{
-					
-					var rex = /(【tail】|【t】|【T】|【Tail】|\[t\]|\[tail\]|\[Tail\]|\[T\])/,
-					rex2 = /(【tail】|【t】|【T】|【Tail】|\[t\]|\[tail\]|\[Tail\]|\[T\])/g,
+					var tailMarks = ['Tail', 'tail', 'T', 't'],
+					checkTailMark = (str)=>{
+						var ret = !1
+						for (var i in tailMarks) {
+							ret = new RegExp('(['+tailMarks[i]+']|【'+tailMarks[i]+'】)').test(str)
+							if(ret) break;
+						}
+						return ret
+					},
+					removeTailMark = (str, removeAll)=>{
+						var res = str, g = typeof removeAll == 'boolean' ? removeAll : !1
+						for (var i in tailMarks) {
+							ret = new RegExp('(['+tailMarks[i]+']|【'+tailMarks[i]+'】)').test(str)
+							if(ret){
+								res = res.replace(removeAll ? new RegExp('(['+tailMarks[i]+']|【'+tailMarks[i]+'】)') : new RegExp('(['+tailMarks[i]+']|【'+tailMarks[i]+'】)', 'g'), '')
+								break;
+							}
+						}
+						return res
+					},
 					formData = $.initData(details.requestBody),
 					content = formData.Content.trim(), tar = $('<div>'+content+'</div>'), tail = tar.find('p[title="tail"]'),
-					txt = tar.text().trim(), hasTailMark = rex.test(txt),
+					txt = tar.text().trim(), hasTailMark = checkTailMark(txt),
 					hasOldTail = tail.length >= 1 ? !0 : !1, ops = 'update'
 					console.log(formData)
 					if(/^https?:\/\/developers\.weixin\.qq\.com\/community\/ngi\/comment\/create/.test(details.url)){
@@ -182,7 +199,7 @@
 
 						ops == 'update' && chrome.tabs.sendRequest(details.tabId, {type: 'updateLocalComment', formData});
 
-						content = content.replace(rex2, '')
+						content = removeTailMark(content)
 						hasTailMark && (content += "<p style=\"display: tail;background: linear-gradient(45deg, red, yellow, rgb(204, 204, 255));font-size: 10px;color: transparent;-webkit-background-clip: text;border-top: 0.5px solid rgba(0,0,0,.06);padding-top: 5px;margin-top: 15px;\" title=\"tail\">"+(window.commentTail ? window.commentTail : '--↓↓👍点赞是回答的动力哦')+"</p>")
 						hasOldTail && (content = content.replace(/<p style="display:([^;]+)?;/, '<p style="display: tail;'));
 						formData.Content = content

@@ -405,8 +405,8 @@ var tips = function(msg, type, time){
     '   stopBubbleDefault(event);'+
     '};'+
     'window.takeoverClickModifyCommentOpt = ()=>{'+
-    '    $("a.post_opr_meta i.edit").each((i, v)=>{'+
-    '        var s = $(v).parents("a.post_opr_meta.new-modify-op");'+
+    '    var takeover = (i, v)=>{'+
+    '        var s = $(v).parent().parent().find("a.post_opr_meta.new-modify-op");'+
     '        if($(v).siblings("span:eq(0)").text().trim() == "编辑"){'+
     '            if(s.length) s.remove();'+
     '            t = $(v).parents("a.post_opr_meta");'+
@@ -448,7 +448,16 @@ var tips = function(msg, type, time){
     '                })'+
     '            ).addClass("origin-modify-op").hide();'+
     '        }'+
+    '    };'+
+    '    $("body").delegate(".post_comment_opr a.post_opr_meta[class=post_opr_meta]", "mouseenter", (e)=>{'+
+    '       var t = e.currentTarget.firstChild;'+
+    '       if($(e.currentTarget).hasClass("new-modify-op")){'+
+    '           return;'+
+    '       }'+
+    '       takeover(null, t);'+
+    '       window.initAppEditorArr();'+
     '    });'+
+    '    $("a.post_opr_meta i.edit").each(takeover);'+
     '};'+
     'window.takeoverCreateCommentOpt = (type)=>{'+
     '    var el = $(window.targetAppEditor.$el), p = type == "modify" ? el.parent() : el.parents(".post_comment_editor_area"),'+

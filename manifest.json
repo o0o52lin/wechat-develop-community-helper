@@ -25,5 +25,5 @@
    "name": "微信开发者社区小助手",
    "permissions": [ "tabs", "contextMenus", "storage", "activeTab", "*://developers.weixin.qq.com/*", "clipboardWrite", "webRequest", "webRequestBlocking" ],
    "short_name": "社区小助手",
-   "version": "1.0.3"
+   "version": "1.0.4"
 }

@@ -254,6 +254,14 @@ var tips = function(msg, type, time){
 ;(function(window, document, $) {
     var pluginCode = '<textarea id="plugin-clipboard" style="position:fixed;left:99999px;"></textarea>'+
     '<script id="plugin-script">'+
+    'window.tips = function(msg, type, time){'+
+    '    type = typeof type == \'undefined\' ? 1 : type;'+
+    '    $(\'#wx-alert\').remove();'+
+    '    $(\'body\').append(\'<div id="wx-alert" class="weui-toptips \'+(!type?\'weui-toptips_error\':\'weui-toptips_success\')+\'" style="z-index: 10005;"><div class="weui-toptips__inner">\'+msg+\'</div></div>\');'+
+    '    setTimeout(()=>{'+
+    '        $(\'#wx-alert\').remove();'+
+    '    }, time||2e3);'+
+    '};'+
     'function stopBubbleDefault(e) { '+
     '    e && e.stopPropagation ? e.stopPropagation() : (window.event.cancelBubble = true);'+
     '    e && e.preventDefault ? e.preventDefault() : (window.event.returnValue = false);'+
@@ -384,6 +392,18 @@ var tips = function(msg, type, time){
     '   window.replyAppEditorArrs = [];'+
     '   window.loopAppEditorArr();'+
     '};'+
+    'window.removeTail = function(event) {'+
+    '   window.targetModifyCommentTail = "";'+
+    '   $(event.currentTarget).off("click").on("click", function(e){window.addTail(e)}).find(".tail-tips").html("添加小尾巴");'+
+    '   tips("已移除小尾巴");'+
+    '   stopBubbleDefault(event);'+
+    '};'+
+    'window.addTail = function(event) {'+
+    '   window.targetModifyCommentTail = "[Tail]";'+
+    '   $(event.currentTarget).off("click").on("click", function(e){window.removeTail(e)}).find(".tail-tips").html("移除当前小尾巴");'+
+    '   tips("已添加小尾巴");'+
+    '   stopBubbleDefault(event);'+
+    '};'+
     'window.takeoverClickModifyCommentOpt = ()=>{'+
     '    $("a.post_opr_meta i.edit").each((i, v)=>{'+
     '        var s = $(v).parents("a.post_opr_meta.new-modify-op");'+
@@ -407,6 +427,21 @@ var tips = function(msg, type, time){
     '                    for(var i in window.answerAppRichEditorArrs){'+
     '                        if(window.answerAppRichEditorArrs[i].o.$parent.comment.CommentId == $(v).parents("li[itemprop=answer]").attr("id")){'+
     '                            window.answerAppRichEditorArrs[i].o.$parent.onStartModify();'+
+    '                            var toolbar = $(window.answerAppRichEditorArrs[i].o.$el).parents(".post_comment_editor_area").find(".ql-toolbar"), tailOp = toolbar.length ? toolbar.find(".remove-tail") : !1;'+
+    '                            toolbar.delegate(".remove-tail", "click", function(e){hasTail ? window.removeTail(e) : window.addTail(e)});'+
+    '                            tailOp.length <= 0 && setTimeout(()=>{'+
+    '                               console.log(tailOp);'+
+    '                               toolbar.append(\''+
+    '                                   <div class="weui-desktop-tooltip__wrp remove-tail">'+
+    '                                      <svg class="icon" style="width: 18px;height: 18px;vertical-align: middle;fill: currentColor;overflow: hidden;" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4156">'+
+    '                                          <path d="M0 0h1024v1024H0V0z m56.888889 56.888889v910.222222h910.222222V56.888889H56.888889z" fill="#ED1B23" p-id="4157"></path>'+
+    '                                          <path d="M722.261333 277.959111H314.026667v75.776h408.234666V277.959111z m50.517334 120.149333H314.026667v34.133334c0 114.005333-8.874667 279.893333-74.410667 391.168a194.104889 194.104889 0 0 0-45.056-25.941334c63.488-106.496 69.632-257.365333 69.632-364.544V233.585778h508.586667v164.522666zM597.333333 767.431111h130.389334c30.72 0 36.181333-12.288 39.594666-74.410667 11.605333 8.192 31.402667 15.701333 45.738667 19.114667-6.826667 79.189333-22.528 101.717333-81.237333 101.717333h-138.581334c-70.997333 0-90.794667-15.701333-90.794666-76.458666v-48.469334l-173.397334 27.306667-8.192-42.325333 181.589334-27.989334v-62.122666l-151.552 23.210666-7.509334-42.325333 159.061334-24.576v-58.026667c-47.104 8.192-95.573333 15.701333-141.312 21.162667a142.563556 142.563556 0 0 0-14.336-36.864c114.005333-15.018667 247.125333-39.594667 318.122666-66.218667l42.325334 32.768c-43.008 15.018667-97.621333 28.672-154.965334 40.277334v60.074666l193.194667-29.354666 7.509333 40.96-200.704 30.72v62.805333l240.298667-37.546667 8.192 41.642667-248.490667 38.912v55.978667c0 25.258667 7.509333 30.037333 45.056 30.037333z"'+
+    '                                          fill="#ED1B23" p-id="4158"></path>'+
+    '                                      </svg>'+
+    '                                      <span class="weui-desktop-tooltip weui-desktop-tooltip__ remove-tail-tip"><p class="tail-tips">\'+(hasTail ? \'移除当前小尾巴\' : \'添加小尾巴\')+\'</p></span>'+
+    '                                   </div>'+
+    '                               \');'+
+    '                            }, 500);'+
     '                            break;'+
     '                        }'+
     '                    }'+
@@ -422,7 +457,8 @@ var tips = function(msg, type, time){
     '    tt.length && tt.removeClass("origin-post-btn").after('+
     '         tt.clone().attr("title", "社区小助手插件已接管").removeClass("origin-post-btn").addClass("new-post-btn").css({display:"inline-block", background:"#eaa000"})'+
     '         .on("click", ()=>{'+
-    '             window.postMessage({ cmd:"commentContent", type: "modify", content: window.targetAppEditor.getContent()+window.targetModifyCommentTail}, "*");'+
+    '             var content = window.targetAppEditor.getContent().trim();'+
+    '             window.postMessage({ cmd:"commentContent", type: "modify", content: (content == "" ? "" : content+window.targetModifyCommentTail)}, "*");'+
     '         })'+
     '    ).addClass("origin-post-btn").hide();'+
     '};'+
@@ -490,6 +526,21 @@ var tips = function(msg, type, time){
     '                        if("comment-editor" === $(window.answerAppRichEditorArrs[i].el).attr("id")){'+
     '                            window.targetAppEditor = window.answerAppRichEditorArrs[i].o;'+
     '                            window.takeoverCreateCommentOpt();'+
+    '                            var toolbar = $(window.targetAppEditor.$el).parents(".post_comment_editor_area").find(".ql-toolbar"), tailOp = toolbar.length ? toolbar.find(".remove-tail") : !1;'+
+    '                            toolbar.delegate(".remove-tail", "click", function(e){window.addTail(e)});'+
+    '                            tailOp.length <= 0 && setTimeout(()=>{'+
+    '                               console.log(tailOp);'+
+    '                               toolbar.append(\''+
+    '                                   <div class="weui-desktop-tooltip__wrp remove-tail">'+
+    '                                      <svg class="icon" style="width: 18px;height: 18px;vertical-align: middle;fill: currentColor;overflow: hidden;" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4156">'+
+    '                                          <path d="M0 0h1024v1024H0V0z m56.888889 56.888889v910.222222h910.222222V56.888889H56.888889z" fill="#ED1B23" p-id="4157"></path>'+
+    '                                          <path d="M722.261333 277.959111H314.026667v75.776h408.234666V277.959111z m50.517334 120.149333H314.026667v34.133334c0 114.005333-8.874667 279.893333-74.410667 391.168a194.104889 194.104889 0 0 0-45.056-25.941334c63.488-106.496 69.632-257.365333 69.632-364.544V233.585778h508.586667v164.522666zM597.333333 767.431111h130.389334c30.72 0 36.181333-12.288 39.594666-74.410667 11.605333 8.192 31.402667 15.701333 45.738667 19.114667-6.826667 79.189333-22.528 101.717333-81.237333 101.717333h-138.581334c-70.997333 0-90.794667-15.701333-90.794666-76.458666v-48.469334l-173.397334 27.306667-8.192-42.325333 181.589334-27.989334v-62.122666l-151.552 23.210666-7.509334-42.325333 159.061334-24.576v-58.026667c-47.104 8.192-95.573333 15.701333-141.312 21.162667a142.563556 142.563556 0 0 0-14.336-36.864c114.005333-15.018667 247.125333-39.594667 318.122666-66.218667l42.325334 32.768c-43.008 15.018667-97.621333 28.672-154.965334 40.277334v60.074666l193.194667-29.354666 7.509333 40.96-200.704 30.72v62.805333l240.298667-37.546667 8.192 41.642667-248.490667 38.912v55.978667c0 25.258667 7.509333 30.037333 45.056 30.037333z"'+
+    '                                          fill="#ED1B23" p-id="4158"></path>'+
+    '                                      </svg>'+
+    '                                      <span class="weui-desktop-tooltip weui-desktop-tooltip__ remove-tail-tip"><p class="tail-tips">添加小尾巴</p></span>'+
+    '                                   </div>'+
+    '                               \');'+
+    '                            }, 500);'+
     '                            console.log("answerRich", window.targetAppEditor);'+
     '                            break;'+
     '                        }'+

@@ -111,6 +111,7 @@
 					break;
 				case 'getAutoSearch':
 	                sendResponse({autoSearch:window[autoSearch_key]})
+	                break;
 			}
 		}
 	});
@@ -153,69 +154,84 @@
 		}
 		return data
 	}
-
-	chrome.webRequest.onBeforeRequest.addListener(
-		function(details) {
-			if(/^https?:\/\/developers\.weixin\.qq\.com\/community\/ngi\/comment\/(create|update)/.test(details.url)){
-				console.log(details);
-				chrome.tabs.insertCSS(details.tabId, {code: '.page_tips.error{display:none;}'});
-				if(/&blockpassed=/.test(details.url)){
-					return {}
-				}else{
-					var tailMarks = ['Tail', 'tail', 'T', 't'],
-					checkTailMark = (str)=>{
-						var ret = !1
-						for (var i in tailMarks) {
-							ret = new RegExp('(['+tailMarks[i]+']|【'+tailMarks[i]+'】)').test(str)
-							if(ret) break;
-						}
-						return ret
-					},
-					removeTailMark = (str, removeAll)=>{
-						var res = str, g = typeof removeAll == 'boolean' ? removeAll : !1
-						for (var i in tailMarks) {
-							ret = new RegExp('(['+tailMarks[i]+']|【'+tailMarks[i]+'】)').test(str)
-							if(ret){
-								res = res.replace(removeAll ? new RegExp('(['+tailMarks[i]+']|【'+tailMarks[i]+'】)') : new RegExp('(['+tailMarks[i]+']|【'+tailMarks[i]+'】)', 'g'), '')
-								break;
-							}
-						}
-						return res
-					},
-					formData = $.initData(details.requestBody),
-					content = formData.Content.trim(), tar = $('<div>'+content+'</div>'), tail = tar.find('p[title="tail"]'),
-					txt = tar.text().trim(), hasTailMark = checkTailMark(txt),
-					hasOldTail = tail.length >= 1 ? !0 : !1, ops = 'update'
-					console.log(formData)
-					if(/^https?:\/\/developers\.weixin\.qq\.com\/community\/ngi\/comment\/create/.test(details.url)){
-						ops = formData.hasOwnProperty('TargetCommentId') ? 'reply' : 'add'
-					}
-					if(hasOldTail && hasTailMark){
-						tail.remove()
-						content = tar.html()
-					}
-					console.log('details.requestBody', details.requestBody);
-					if(hasTailMark || hasOldTail){
-
-						ops == 'update' && chrome.tabs.sendRequest(details.tabId, {type: 'updateLocalComment', formData});
-
-						content = removeTailMark(content)
-						hasTailMark && (content += "<p style=\"display: tail;background: linear-gradient(45deg, red, yellow, rgb(204, 204, 255));font-size: 10px;color: transparent;-webkit-background-clip: text;border-top: 0.5px solid rgba(0,0,0,.06);padding-top: 5px;margin-top: 15px;\" title=\"tail\">"+(window.commentTail ? window.commentTail : '--↓↓👍点赞是回答的动力哦')+"</p>")
-						hasOldTail && (content = content.replace(/<p style="display:([^;]+)?;/, '<p style="display: tail;'));
-						formData.Content = content
-						console.log('content', content);
-						chrome.tabs.sendRequest(details.tabId, {type: 'addComment', formData, url:details.url, ops});
-						
-						return {cancel: true}
-					}
-					setTimeout(()=>chrome.tabs.insertCSS(details.tabId, {code: '.page_tips.error{display:block;}'}), 1000);
-					return {}
-				}
+	window.tailMarks = ['Tail', 'tail', 'T', 't']
+	window.checkTailMark = (str)=>{
+		var ret = !1
+		for (var i in tailMarks) {
+			ret = new RegExp('(\\['+tailMarks[i]+'\\]|【'+tailMarks[i]+'】)').test(str)
+			if(ret) break;
+		}
+		return ret
+	}
+	window.removeTailMark = (str, removeAll)=>{
+		var res = str, g = typeof removeAll == 'boolean' ? removeAll : !1
+		for (var i in tailMarks) {
+			ret = new RegExp('(\\['+tailMarks[i]+'\\]|【'+tailMarks[i]+'】)').test(str)
+			if(ret){
+				res = res.replace(removeAll ? new RegExp('(\\['+tailMarks[i]+'\\]|【'+tailMarks[i]+'】)') : new RegExp('(\\['+tailMarks[i]+'\\]|【'+tailMarks[i]+'】)', 'g'), '')
+				break;
 			}
-		},
-		{urls: ["<all_urls>"], types: [ "main_frame", "sub_frame", "stylesheet", "script", "image", "object", "xmlhttprequest", "other"]},
-		["blocking","requestBody"]
-	);
-	
+		}
+		return res
+	}
+	window.getTailMarkContent = (content)=>{
+		var tar = $('<div>'+content+'</div>'), tail = tar.find('p[title="tail"]'),
+		txt = tar.text().trim(), hasTailMark = checkTailMark(txt),
+		hasOldTail = tail.length >= 1 ? !0 : !1
+		if(hasOldTail && hasTailMark){
+			tail.remove()
+			content = tar.html()
+		}
+		if(hasTailMark || hasOldTail){
+			content = removeTailMark(content)
+			hasTailMark && (content += "<p style=\"display: tail;background: linear-gradient(45deg, red, yellow, rgb(204, 204, 255));font-size: 10px;color: transparent;-webkit-background-clip: text;border-top: 0.5px solid rgba(0,0,0,.06);padding-top: 5px;margin-top: 15px;\" title=\"tail\">"+(window.commentTail ? window.commentTail : '--↓↓👍点赞是回答的动力哦')+"</p>")
+			hasOldTail && (content = content.replace(/<p style="display:([^;]+)?;/, '<p style="display: tail;'));
+		}
+		return {content, hasTailMark, hasOldTail}
+	}
+
+	// chrome.webRequest.onBeforeRequest.addListener(
+	// 	function(details) {
+	// 		if(/^https?:\/\/developers\.weixin\.qq\.com\/community\/ngi\/comment\/(create|update)/.test(details.url)){
+	// 			console.log(details);
+	// 			chrome.tabs.insertCSS(details.tabId, {code: '.page_tips.error{display:none;}'});
+	// 			if(/&blockpassed=/.test(details.url)){
+	// 				return {}
+	// 			}else{
+	// 				var formData = $.initData(details.requestBody),
+	// 				result = getTailMarkContent(formData.Content.trim()), ops = 'update'
+	// 				console.log(result)
+	// 				if(/^https?:\/\/developers\.weixin\.qq\.com\/community\/ngi\/comment\/create/.test(details.url)){
+	// 					ops = formData.hasOwnProperty('TargetCommentId') ? 'reply' : 'add'
+	// 				}
+	// 				console.log('details.requestBody', details.requestBody);
+	// 				if(result.hasTailMark || result.hasOldTail){
+
+	// 					ops == 'update' && chrome.tabs.sendRequest(details.tabId, {type: 'updateLocalComment', formData});
+
+	// 					formData.Content = result.content
+	// 					console.log('content', result.content);
+	// 					chrome.tabs.sendRequest(details.tabId, {type: 'addComment', formData, url:details.url, ops});
+						
+	// 					return {cancel: true}
+	// 				}
+	// 				setTimeout(()=>chrome.tabs.insertCSS(details.tabId, {code: '.page_tips.error{display:block;}'}), 1000);
+	// 				return {}
+	// 			}
+	// 		}
+	// 	},
+	// 	{urls: ["<all_urls>"], types: [ "main_frame", "sub_frame", "stylesheet", "script", "image", "object", "xmlhttprequest", "other"]},
+	// 	["blocking","requestBody"]
+	// );
+
+	chrome.runtime.onMessage.addListener(function(message, sender, sendResponse){
+		type = message.type || '';
+		if(type == 'hasTailMark'){
+			console.log(message)
+			sendResponse({result:getTailMarkContent(message.content)})
+		}
+
+	})
 
 })(this);
+

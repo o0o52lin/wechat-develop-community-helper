@@ -16,6 +16,13 @@
 	    tail && chrome.storage.local.set(data);
 	}
 
+	function updateCommentTailBg(tail){
+	    var data = {}, tail = tail ? tail.trim() : ''
+	    data['commentTailBg'] = tail.trim();
+	    window['commentTailBg'] = tail.trim();
+	    tail && chrome.storage.local.set(data);
+	}
+
 	var autoSearch_key = 'autoSearch';
 	var menus = {
 		baseMid: ()=>{
@@ -94,6 +101,18 @@
 			    })
 			}, "documentUrlPatterns": ['*://developers.weixin.qq.com/*']})
 			return this.commentTailmid
+		},
+
+		commentTailBgMid: ()=>{
+			this.txdzmid = this.commentTailmid ? this.commentTailmid : chrome.contextMenus.create({"parentId": menus.baseMid(), "title": '设置小尾巴颜色', "contexts": ['all'], "onclick": (e)=>{
+				chrome.tabs.query({active:true}, function(tab) {
+					var data = window.prompt('设置回答小尾巴颜色(非必填，默认"linear-gradient(45deg, red, yellow, rgb(204, 204, 255))")', (window.commentTailBg ? window.commentTailBg : 'linear-gradient(45deg, red, yellow, rgb(204, 204, 255))'))
+					data = (data || '').trim();
+					updateCommentTailBg(data);
+			        data != '' && chrome.tabs.sendRequest(tab[0].id, {type: 'alert', ok: 1, msg:'设置成功'});
+			    })
+			}, "documentUrlPatterns": ['*://developers.weixin.qq.com/*']})
+			return this.commentTailmid
 		}
 
 	}
@@ -121,6 +140,9 @@
     })
 	chrome.storage.local.get('commentTail', function (ret) {
         updateCommentTail(ret.commentTail && ret.commentTail.trim() != '' ? ret.commentTail.trim() : false)
+    })
+	chrome.storage.local.get('commentTailBg', function (ret) {
+        updateCommentTailBg(ret.commentTailBg && ret.commentTailBg.trim() != '' ? ret.commentTailBg.trim() : false)
     })
 
 
@@ -184,45 +206,11 @@
 		}
 		if(hasTailMark || hasOldTail){
 			content = removeTailMark(content)
-			hasTailMark && (content += "<p style=\"display: tail;background: linear-gradient(45deg, red, yellow, rgb(204, 204, 255));font-size: 10px;color: transparent;-webkit-background-clip: text;border-top: 0.5px solid rgba(0,0,0,.06);padding-top: 5px;margin-top: 15px;\" title=\"tail\">"+(window.commentTail ? window.commentTail : '--↓↓👍点赞是回答的动力哦')+"</p>")
+			hasTailMark && (content += "<p style=\"display: tail;background: "+(window.commentTailBg ? window.commentTailBg : "linear-gradient(45deg, red, yellow, rgb(204, 204, 255))")+";font-size: 10px;color: transparent;-webkit-background-clip: text;border-top: 0.5px solid rgba(0,0,0,.06);padding-top: 5px;margin-top: 15px;\" title=\"tail\">"+(window.commentTail ? window.commentTail : '--↓↓👍点赞是回答的动力哦')+"</p>")
 			hasOldTail && (content = content.replace(/<p style="display:([^;]+)?;/, '<p style="display: tail;'));
 		}
 		return {content, hasTailMark, hasOldTail}
 	}
-
-	// chrome.webRequest.onBeforeRequest.addListener(
-	// 	function(details) {
-	// 		if(/^https?:\/\/developers\.weixin\.qq\.com\/community\/ngi\/comment\/(create|update)/.test(details.url)){
-	// 			console.log(details);
-	// 			chrome.tabs.insertCSS(details.tabId, {code: '.page_tips.error{display:none;}'});
-	// 			if(/&blockpassed=/.test(details.url)){
-	// 				return {}
-	// 			}else{
-	// 				var formData = $.initData(details.requestBody),
-	// 				result = getTailMarkContent(formData.Content.trim()), ops = 'update'
-	// 				console.log(result)
-	// 				if(/^https?:\/\/developers\.weixin\.qq\.com\/community\/ngi\/comment\/create/.test(details.url)){
-	// 					ops = formData.hasOwnProperty('TargetCommentId') ? 'reply' : 'add'
-	// 				}
-	// 				console.log('details.requestBody', details.requestBody);
-	// 				if(result.hasTailMark || result.hasOldTail){
-
-	// 					ops == 'update' && chrome.tabs.sendRequest(details.tabId, {type: 'updateLocalComment', formData});
-
-	// 					formData.Content = result.content
-	// 					console.log('content', result.content);
-	// 					chrome.tabs.sendRequest(details.tabId, {type: 'addComment', formData, url:details.url, ops});
-						
-	// 					return {cancel: true}
-	// 				}
-	// 				setTimeout(()=>chrome.tabs.insertCSS(details.tabId, {code: '.page_tips.error{display:block;}'}), 1000);
-	// 				return {}
-	// 			}
-	// 		}
-	// 	},
-	// 	{urls: ["<all_urls>"], types: [ "main_frame", "sub_frame", "stylesheet", "script", "image", "object", "xmlhttprequest", "other"]},
-	// 	["blocking","requestBody"]
-	// );
 
 	chrome.runtime.onMessage.addListener(function(message, sender, sendResponse){
 		type = message.type || '';

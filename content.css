@@ -427,3 +427,17 @@
 /*.comment_reply_body .comment_reply_input_box_active button.btn_primary,.comment_editor_box .tool_bar .btn_primary{
     display: none;
 }*/
+
+
+.remove-tail {
+    cursor: pointer;
+}
+
+.remove-tail-tip{
+    display: none!important;
+}
+
+.remove-tail:hover .remove-tail-tip{
+    display: block!important;
+    max-width: fit-content!important;
+}

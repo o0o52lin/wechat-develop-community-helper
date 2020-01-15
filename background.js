@@ -23,6 +23,10 @@
 	    tail && chrome.storage.local.set(data);
 	}
 
+	function getCurrentTail(){
+	    return "<p style=\"display: tail;text-align: left;border-top: 0.5px solid rgba(0,0,0,.06);padding-top: 5px;margin-top: 15px;\" title=\"tail\"><span style=\"width: fit-content;background: "+(window.commentTailBg ? window.commentTailBg : "linear-gradient(45deg, red, yellow, rgb(204, 204, 255))")+";font-size: 10px;color: transparent;-webkit-background-clip: text;\">"+(window.commentTail ? window.commentTail : '--↓↓👍点赞是回答的动力哦')+"</span></p>"
+	}
+
 	var autoSearch_key = 'autoSearch';
 	var menus = {
 		baseMid: ()=>{
@@ -97,7 +101,7 @@
 					var data = window.prompt('设置回答小尾巴(非必填，默认"--↓↓👍点赞是回答的动力哦")\r\n回答内容中带有 特定标识 即可自动带小尾巴\r\n特定标识有：[t]、[T]、[tail]、[Tail]、【t】、【T】、【tail】、【Tail】', (window.commentTail ? window.commentTail : '--↓↓👍点赞是回答的动力哦'))
 					data = (data || '').trim();
 					updateCommentTail(data);
-			        data != '' && chrome.tabs.sendRequest(tab[0].id, {type: 'alert', ok: 1, msg:'设置成功'});
+			        data != '' && chrome.tabs.sendRequest(tab[0].id, {type: 'alert', ok: 1, msg:'设置成功', op: 'tail', tail:getCurrentTail()});
 			    })
 			}, "documentUrlPatterns": ['*://developers.weixin.qq.com/*']})
 			return this.commentTailmid
@@ -109,7 +113,7 @@
 					var data = window.prompt('设置回答小尾巴颜色(非必填，默认"linear-gradient(45deg, red, yellow, rgb(204, 204, 255))")', (window.commentTailBg ? window.commentTailBg : 'linear-gradient(45deg, red, yellow, rgb(204, 204, 255))'))
 					data = (data || '').trim();
 					updateCommentTailBg(data);
-			        data != '' && chrome.tabs.sendRequest(tab[0].id, {type: 'alert', ok: 1, msg:'设置成功'});
+			        data != '' && chrome.tabs.sendRequest(tab[0].id, {type: 'alert', ok: 1, msg:'设置成功', op: 'tail', tail:getCurrentTail()});
 			    })
 			}, "documentUrlPatterns": ['*://developers.weixin.qq.com/*']})
 			return this.commentTailmid
@@ -206,7 +210,7 @@
 		}
 		if(hasTailMark || hasOldTail){
 			content = removeTailMark(content)
-			hasTailMark && (content += "<p style=\"display: tail;background: "+(window.commentTailBg ? window.commentTailBg : "linear-gradient(45deg, red, yellow, rgb(204, 204, 255))")+";font-size: 10px;color: transparent;-webkit-background-clip: text;border-top: 0.5px solid rgba(0,0,0,.06);padding-top: 5px;margin-top: 15px;\" title=\"tail\">"+(window.commentTail ? window.commentTail : '--↓↓👍点赞是回答的动力哦')+"</p>")
+			hasTailMark && (content += getCurrentTail())
 			hasOldTail && (content = content.replace(/<p style="display:([^;]+)?;/, '<p style="display: tail;'));
 		}
 		return {content, hasTailMark, hasOldTail}
@@ -217,9 +221,10 @@
 		if(type == 'hasTailMark'){
 			console.log(message)
 			sendResponse({result:getTailMarkContent(message.content)})
+		}else if(type == 'getCurrentTail'){
+			sendResponse({tail:getCurrentTail()})
 		}
 
 	})
 
 })(this);
-

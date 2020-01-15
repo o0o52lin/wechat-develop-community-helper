@@ -489,8 +489,9 @@ var tips = function(msg, type, time){
     '                                   </div>'+
     '                               \');'+
     '                            }, 500);'+
-    '                            toolbar.parents(".comment_editor_box").find(".tool_bar .preview-tail").remove();'+
-    '                            toolbar.parents(".comment_editor_box").find(".tool_bar > :first").before(\'<div class="preview-tail"></div>\');'+
+    '                            toolbar.parents(".comment_editor_box").find(".tool_bar .preview-tail").text().trim() == "" && ('+
+    '                            toolbar.parents(".comment_editor_box").find(".tool_bar .preview-tail").remove(),'+
+    '                            toolbar.parents(".comment_editor_box").find(".tool_bar > :first").before(\'<div class="preview-tail"></div>\'));'+
     '                            console.log("answerRich", window.targetAppEditor);'+
     '                            break;'+
     '                        }'+

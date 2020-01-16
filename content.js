@@ -395,7 +395,7 @@ var tips = function(msg, type, time){
     '    ).addClass("origin-post-btn").hide();'+
     '};'+
     'window.takeoverReplyCommentOpt = ()=>{'+
-    '    var el = $(window.targetAppEditor.$el), p = el.parents("li[itemprop=answer]"),'+
+    '    var el = $(window.targetAppEditor.$el), t = el.parents("li[itemprop=answer]"), p = t.length ? t : el.parents("li[itemprop=comment]"),'+
     '    s = p.length ? p.find("button.btn_primary.new-reply-btn") : [], tt = p.length ? p.find("button.btn_primary:eq(0)") : [];'+
     '    if(s.length) s.remove();'+
     '    tt.length && tt.removeClass("origin-reply-btn").after('+

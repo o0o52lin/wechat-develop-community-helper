@@ -1,30 +1,100 @@
 
 ;(function (window) {
-
-	function updateAutoSearch(autoSearch){
-	    var data = {};
-	    data[autoSearch_key] = autoSearch;
-	    window[autoSearch_key] = autoSearch;
-	    chrome.storage.local.set(data);
-	    chrome.contextMenus.update(menus.aSearchMid(), {checked:Boolean(autoSearch)});
+	window.commentTailDefaulContent = '--↓↓👍点赞是回答的动力哦'
+	window.commentTailDefaulBgcolor = 'linear-gradient(45deg, red, yellow, rgb(204, 204, 255))'
+	window.commentTailDefaulTpl = '<p style="display: tail;text-align: left;border-top: 0.5px solid rgba(0,0,0,.06);padding-top: 5px;margin-top: 15px;" title="tail"><span style="width: fit-content;background: {bgcolor};font-size: 10px;color: transparent;-webkit-background-clip: text;">{content}</span></p>'
+	window.commentTailSetting = {
+		type: 1,
+		default:{
+			type: 1,
+			content: window.commentTailDefaulContent,
+			bgcolor: window.commentTailDefaulBgcolor,
+			html: window.commentTailDefaulTpl.replace('{content}', window.commentTailDefaulContent).replace('{bgcolor}', window.commentTailDefaulBgcolor)
+		},
+		current:{
+			type: 1
+		}
+	}
+	window.codeTipSetting = {
+		default: "你好，请提供能复现问题的简单代码片段\r\nhttps://developers.weixin.qq.com/miniprogram/dev/devtools/minicode.html",
+		current: ''
 	}
 
-	function updateCommentTail(tail){
-	    var data = {}, tail = tail ? tail.trim() : ''
-	    data['commentTail'] = tail.trim();
-	    window['commentTail'] = tail.trim();
-	    tail && chrome.storage.local.set(data);
+	window.updateAutoSearch = function updateAutoSearch(autoSearch){
+		var data = {};
+		data[autoSearch_key] = autoSearch;
+		window[autoSearch_key] = autoSearch;
+		chrome.storage.local.set(data);
+		chrome.contextMenus.update(menus.aSearchMid(), {checked:Boolean(autoSearch)});
 	}
 
-	function updateCommentTailBg(tail){
-	    var data = {}, tail = tail ? tail.trim() : ''
-	    data['commentTailBg'] = tail.trim();
-	    window['commentTailBg'] = tail.trim();
-	    tail && chrome.storage.local.set(data);
+	window.updateCommentTail = function updateCommentTail(tail){
+		var data = {}, tail = tail ? tail.trim() : ''
+		data['commentTail'] = tail.trim();
+		window['commentTail'] = tail.trim();
+		if(tail != '') {
+			chrome.storage.local.set(data);
+		}
 	}
 
-	function getCurrentTail(){
-	    return "<p style=\"display: tail;text-align: left;border-top: 0.5px solid rgba(0,0,0,.06);padding-top: 5px;margin-top: 15px;\" title=\"tail\"><span style=\"width: fit-content;background: "+(window.commentTailBg ? window.commentTailBg : "linear-gradient(45deg, red, yellow, rgb(204, 204, 255))")+";font-size: 10px;color: transparent;-webkit-background-clip: text;\">"+(window.commentTail ? window.commentTail : '--↓↓👍点赞是回答的动力哦')+"</span></p>"
+	window.updateCommentTailBg = function updateCommentTailBg(bg){
+		var data = {}, bg = bg ? bg.trim() : ''
+		data['commentTailBg'] = bg.trim();
+		window['commentTailBg'] = bg.trim();
+		if(bg != '') {
+			chrome.storage.local.set(data);
+		}
+	}
+
+	window.updateCommentTailHtml = function updateCommentTailHtml(html){
+		var data = {}, html = html ? html.trim() : ''
+		data['commentTailHtml'] = html.trim();
+		window['commentTailHtml'] = html.trim();
+		if(html != '') {
+			chrome.storage.local.set(data);
+		}
+	}
+
+	window.updateCommentTailType = function updateCommentTailType(type){
+		var data = {}, type = type == 2 ? 2 : 1
+		data['commentTailType'] = type;
+		window['commentTailType'] = type;
+		chrome.storage.local.set(data);
+	}
+
+
+	window.updateCommentTailSetting = function updateCommentTailSetting(type, data){
+		var type = type || 1, data = data || {}
+		chrome.storage.local.get('commentTailSetting', function (ret) {
+			var def = JSON.parse(JSON.stringify(window.commentTailSetting.default))
+			set = Object.assign(def, ret.commentTailSetting||{})
+			if(type == 1){
+				set.type = 1
+				if(data.hasOwnProperty('content')){
+					set.content = data.hasOwnProperty('content') ? data.content.trim() : ''
+				}else{
+					set.bgcolor = data.hasOwnProperty('bgcolor') ? data.bgcolor.trim() : ''
+				}
+			}else{
+				set.type = 2
+				if(data.hasOwnProperty('html')){
+					set.content = ''
+					set.bgcolor = ''
+					set.html = data.hasOwnProperty('html') ? data.html.trim() : ''
+				}
+			}
+			window.commentTailSetting.type = set.type
+			window.commentTailSetting.current = set;
+			chrome.storage.local.set({commentTailSetting:set});
+		})
+	}
+
+	window.getCurrentTail = function getCurrentTail(){
+		if(window.commentTailSetting.type == 2){
+			return window.commentTailSetting.current.html
+		}else{
+			return "<p style=\"display: tail;text-align: left;border-top: 0.5px solid rgba(0,0,0,.06);padding-top: 5px;margin-top: 15px;\" title=\"tail\"><span style=\"width: fit-content;background: "+(window.commentTailSetting.current.bgcolor ? window.commentTailSetting.current.bgcolor : window.commentTailSetting.default.bgcolor)+";font-size: 10px;color: transparent;-webkit-background-clip: text;\">"+(window.commentTailSetting.current.content ? window.commentTailSetting.current.content : window.commentTailSetting.default.content)+"</span></p>"
+		}
 	}
 
 	var autoSearch_key = 'autoSearch';
@@ -35,7 +105,7 @@
 		},
 		aSearchMid: ()=>{
 			this.asmid = this.asmid ? this.asmid : chrome.contextMenus.create({"parentId": menus.baseMid(), "title": '启用选中自动查询', "type":'checkbox',"contexts": ["all"], "onclick": (e, tab)=>{
-			    updateAutoSearch(e.checked ? 1 : 0);
+				updateAutoSearch(e.checked ? 1 : 0);
 			}, "documentUrlPatterns": ['*://developers.weixin.qq.com/*']})
 			return this.asmid
 		},
@@ -43,10 +113,10 @@
 			this.gusmid = this.gusmid ? this.gusmid : chrome.contextMenus.create({"parentId": menus.baseMid(), "title": '查询TA的积分', "contexts": ['link'], "onclick": (e)=>{
 				var openid = e.linkUrl.replace(/(.*)?community\/personal\/([a-zA-Z0-9_-]+)(.*)?/, '$2')
 				chrome.tabs.query({active:true}, function(tab) {
-			        var message = {'type': 'getUserScore', openid:openid, tab:tab[0]};
-			        console.log(tab,message)
-			        chrome.tabs.sendRequest(tab[0].id, message);
-			    })
+					var message = {'type': 'getUserScore', openid:openid, tab:tab[0]};
+					console.log(tab,message)
+					chrome.tabs.sendRequest(tab[0].id, message);
+				})
 			}, "documentUrlPatterns": ['*://developers.weixin.qq.com/*']})
 			return this.gusmid
 		},
@@ -55,8 +125,8 @@
 			this.ctmid = this.ctmid ? this.ctmid : chrome.contextMenus.create({"parentId": menus.baseMid(), "title": '复制代码片段提示', "contexts": ['all'], "onclick": (e)=>{
 				chrome.tabs.query({active:true}, function(tab) {
 					var text = "你好，请提供能复现问题的简单代码片段\r\nhttps://developers.weixin.qq.com/miniprogram/dev/devtools/minicode.html"
-			        chrome.tabs.sendRequest(tab[0].id, {type: 'copy', text, msg:'复制成功，粘贴即可', tab:tab[0]});
-			    })
+					chrome.tabs.sendRequest(tab[0].id, {type: 'copy', text, msg:'复制成功，粘贴即可', tab:tab[0]});
+				})
 			}, "documentUrlPatterns": ['*://developers.weixin.qq.com/*']})
 			return this.ctmid
 		},
@@ -70,14 +140,14 @@
 			this.txzmid = this.txzmid ? this.txzmid : chrome.contextMenus.create({"parentId": menus.txMid(), "title": '旋转文字', "contexts": ['all'], "onclick": (e)=>{
 				chrome.tabs.query({active:true}, function(tab) {
 					var data = window.prompt('输入旋转的文字内容(必填)').trim()
-				    if( data == '' )
-				    {
-				        return chrome.tabs.sendRequest(tab[0].id, {type: 'alert', ok:0, msg:'内容不能为空', tab:tab[0]});
-				    }
+					if( data == '' )
+					{
+						return chrome.tabs.sendRequest(tab[0].id, {type: 'alert', ok:0, msg:'内容不能为空', tab:tab[0]});
+					}
 
 					var text = '<div style="font-size: 1rem; animation: weuiLoading 2s ease-in-out infinite;width: fit-content;background-image: -webkit-linear-gradient(left, red, rgb(20, 11, 255));-webkit-background-clip: text;-webkit-text-fill-color: transparent;display:inline-block;">'+data+'</div>'
-			        chrome.tabs.sendRequest(tab[0].id, {type: 'copy', text, msg:'复制成功，粘贴即可', tab:tab[0]});
-			    })
+					chrome.tabs.sendRequest(tab[0].id, {type: 'copy', text, msg:'复制成功，粘贴即可', tab:tab[0]});
+				})
 			}, "documentUrlPatterns": ['*://developers.weixin.qq.com/*']})
 			return this.txzmid
 		},
@@ -89,39 +159,55 @@
 					data = (data || '').trim()
 
 					var text = '<p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:16s;background-color:skyblue;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:250px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:17s;background-color:red;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:5px;border-radius:10%;display:inline-block;">赞</p><p style="width: 0px!important;height: 0px!important;"><br></p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:15s;background-color:green;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:230px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:18s;background-color:orange;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:42px;border-radius:10%;display:inline-block;">赞</p><p style="width: 0px!important;height: 0px!important;"><br></p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:11s;background-color:green;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:80px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:12s;background-color:skyblue;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:5px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:13s;background-color:red;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:5px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:14s;background-color:orange;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:5px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:19s;background-color:green;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:64px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:20s;background-color:skyblue;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:5px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:21s;background-color:red;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:5px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:22s;background-color:orange;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:5px;border-radius:10%;display:inline-block;">赞</p><p style="width: 0px!important;height: 0px!important;"><br></p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:10s;background-color:orange;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:80px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:1s;background-color:red;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:41px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:23s;background-color:green;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:246px;border-radius:10%;display:inline-block;">赞</p><p style="width: 0px!important;height: 0px!important;"><br></p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:9s;background-color:red;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:80px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:2s;background-color:orange;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:41px;border-radius:10%;display:inline-block;">赞</p><p style="color: #000;padding:6px 10px;margin-left: 0;margin-bottom:5px;display:inline-block;width:228px;text-align:center;">'+(data||'给你一个大大的赞')+'</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:24s;background-color:skyblue;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:0;border-radius:10%;display:inline-block;">赞</p><p style="width: 0px!important;height: 0px!important;"><br></p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:8s;background-color:skyblue;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:80px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:3s;background-color:green;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:41px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:25s;background-color:red;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:221px;border-radius:10%;display:inline-block;">赞</p><p style="width: 0px!important;height: 0px!important;"><br></p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:7s;background-color:green;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:80px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:4s;background-color:skyblue;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:41px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:26s;background-color:orange;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:204px;border-radius:10%;display:inline-block;">赞</p><p style="width: 0px!important;height: 0px!important;"><br></p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:6s;background-color:orange;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:80px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:5s;background-color:red;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:5px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:32s;background-color:skyblue;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:5px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:31s;background-color:green;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:5px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:30s;background-color:orange;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:5px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:29s;background-color:red;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:5px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:28s;background-color:skyblue;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:5px;border-radius:10%;display:inline-block;">赞</p><p style="animation:weuiLoading 1s ease-in-out infinite;animation-delay:27s;background-color:green;color:#fff;padding:6px 10px;margin-bottom:5px;margin-left:5px;border-radius:10%;display:inline-block;">赞</p>'
-			        data != '' && chrome.tabs.sendRequest(tab[0].id, {type: 'copy', text, msg:'复制成功，粘贴即可', tab:tab[0]});
-			    })
+					data != '' && chrome.tabs.sendRequest(tab[0].id, {type: 'copy', text, msg:'复制成功，粘贴即可', tab:tab[0]});
+				})
 			}, "documentUrlPatterns": ['*://developers.weixin.qq.com/*']})
 			return this.txdzmid
 		},
 
 		commentTailMid: ()=>{
-			this.txdzmid = this.commentTailmid ? this.commentTailmid : chrome.contextMenus.create({"parentId": menus.baseMid(), "title": '设置回答小尾巴', "contexts": ['all'], "onclick": (e)=>{
+			this.commentTailmid = this.commentTailmid ? this.commentTailmid : chrome.contextMenus.create({"parentId": menus.baseMid(), "title": '设置回答小尾巴', "contexts": ['all'], "onclick": (e)=>{
 				chrome.tabs.query({active:true}, function(tab) {
-					var data = window.prompt('设置回答小尾巴(非必填，默认"--↓↓👍点赞是回答的动力哦")\r\n回答内容中带有 特定标识 即可自动带小尾巴\r\n特定标识有：[t]、[T]、[tail]、[Tail]、【t】、【T】、【tail】、【Tail】', (window.commentTail ? window.commentTail : '--↓↓👍点赞是回答的动力哦'))
+					var data = window.prompt('设置回答小尾巴(非必填，默认"--↓↓👍点赞是回答的动力哦")\r\n回答内容中带有 特定标识 即可自动带小尾巴\r\n特定标识有：[t]、[T]、[tail]、[Tail]、【t】、【T】、【tail】、【Tail】', (window.commentTailSetting.current.content ? window.commentTailSetting.current.content : '--↓↓👍点赞是回答的动力哦'))
 					data = (data || '').trim();
-					updateCommentTail(data);
-			        data != '' && chrome.tabs.sendRequest(tab[0].id, {type: 'alert', ok: 1, msg:'设置成功', op: 'tail', tail:getCurrentTail()});
-			    })
+					updateCommentTailSetting(1, {content:data});
+					data != '' && chrome.tabs.sendRequest(tab[0].id, {type: 'alert', ok: 1, msg:'设置成功', op: 'tail', tail:getCurrentTail()});
+				})
 			}, "documentUrlPatterns": ['*://developers.weixin.qq.com/*']})
 			return this.commentTailmid
 		},
 
 		commentTailBgMid: ()=>{
-			this.txdzmid = this.commentTailmid ? this.commentTailmid : chrome.contextMenus.create({"parentId": menus.baseMid(), "title": '设置小尾巴颜色', "contexts": ['all'], "onclick": (e)=>{
+			this.commentTailmid = this.commentTailmid ? this.commentTailmid : chrome.contextMenus.create({"parentId": menus.baseMid(), "title": '设置小尾巴颜色', "contexts": ['all'], "onclick": (e)=>{
 				chrome.tabs.query({active:true}, function(tab) {
-					var data = window.prompt('设置回答小尾巴颜色(非必填，默认"linear-gradient(45deg, red, yellow, rgb(204, 204, 255))")', (window.commentTailBg ? window.commentTailBg : 'linear-gradient(45deg, red, yellow, rgb(204, 204, 255))'))
-					data = (data || '').trim();
-					updateCommentTailBg(data);
-			        data != '' && chrome.tabs.sendRequest(tab[0].id, {type: 'alert', ok: 1, msg:'设置成功', op: 'tail', tail:getCurrentTail()});
-			    })
+					var data = window.prompt('设置回答小尾巴颜色(非必填，默认"linear-gradient(45deg, red, yellow, rgb(204, 204, 255))")', (window.commentTailSetting.current.bgcolor ? window.commentTailSetting.current.bgcolor : 'linear-gradient(45deg, red, yellow, rgb(204, 204, 255))'))
+					data = (data || '').trim()
+					updateCommentTailSetting(1, {bgcolor:data});
+					data != '' && chrome.tabs.sendRequest(tab[0].id, {type: 'alert', ok: 1, msg:'设置成功', op: 'tail', tail:getCurrentTail()});
+				})
 			}, "documentUrlPatterns": ['*://developers.weixin.qq.com/*']})
 			return this.commentTailmid
+		},
+
+		commentTail: ()=>{
+			this.commentmid = this.commentmid ? this.commentmid : chrome.contextMenus.create({"parentId": menus.baseMid(), "title": '设置回答小尾巴HTML', "contexts": ['all'], "onclick": (e)=>{
+				chrome.tabs.query({active:true}, function(tab) {
+					var data = window.prompt('设置回答小尾巴HTML(非必填)', window.commentTailSetting.current.html)
+					data = (data || '').trim();
+					updateCommentTailSetting(2, {html:data});
+					data != '' && chrome.tabs.sendRequest(tab[0].id, {type: 'alert', ok: 1, msg:'设置成功', op: 'tail', tail:getCurrentTail()});
+				})
+			}, "documentUrlPatterns": ['*://developers.weixin.qq.com/*']})
+			return this.commentmid
+		},
+		settingMid: ()=>{
+			this.settingmid = this.settingmid ? this.settingmid : chrome.contextMenus.create({"parentId": menus.baseMid(), "title": '更多设置', "contexts": ['all'], "onclick": (e)=>{
+				chrome.tabs.create({url:chrome.runtime.getURL('options.html')}, function(tab) {
+				})
+			}, "documentUrlPatterns": ['*://developers.weixin.qq.com/*']})
+			return this.settingmid
 		}
 
-	}
-	for(var i in menus){
-		menus[i]()
 	}
 	chrome.extension.onMessage.addListener(function (request, sender, sendResponse) {
 		if (request && request.cmd) {
@@ -133,22 +219,29 @@
 					sendResponse({cmd:'search', msg:'ok'})
 					break;
 				case 'getAutoSearch':
-	                sendResponse({autoSearch:window[autoSearch_key]})
-	                break;
+					sendResponse({autoSearch:window[autoSearch_key]})
+					break;
 			}
 		}
 	});
 
 	chrome.storage.local.get(autoSearch_key, function (ret) {
-        updateAutoSearch(ret.autoSearch)
-    })
-	chrome.storage.local.get('commentTail', function (ret) {
-        updateCommentTail(ret.commentTail && ret.commentTail.trim() != '' ? ret.commentTail.trim() : false)
-    })
-	chrome.storage.local.get('commentTailBg', function (ret) {
-        updateCommentTailBg(ret.commentTailBg && ret.commentTailBg.trim() != '' ? ret.commentTailBg.trim() : false)
-    })
+		updateAutoSearch(ret.autoSearch)
+	})
+	chrome.storage.local.get('commentTailSetting', function (ret) {
+		var def = JSON.parse(JSON.stringify(window.commentTailSetting.default))
+		window.commentTailSetting.current = Object.assign(def, ret.commentTailSetting||{})
+		window.commentTailSetting.type = window.commentTailSetting.current.type
+	})
 
+	for(var i in menus){
+		if(window.commentTailSetting.type == 1){
+			if(i == 'commentTailMid' || i == 'commentTailBgMid') continue
+		}else{
+			if(i == 'commentTail') continue
+		}
+		menus[i]()
+	}
 
 	$.ab2str = function(ab) {
 		let unit8Arr = ab

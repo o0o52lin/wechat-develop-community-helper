@@ -1,5 +1,6 @@
 
 ;(function (window) {
+	window.commonReplyListEnable = !0
 	window.commentTailDefaulContent = '--↓↓👍点赞是回答的动力哦'
 	window.commentTailDefaulBgcolor = 'linear-gradient(45deg, red, yellow, rgb(204, 204, 255))'
 	window.commentTailDefaulTpl = '<p style="display: tail;text-align: left;border-top: 0.5px solid rgba(0,0,0,.06);padding-top: 5px;margin-top: 15px;" title="tail"><span style="width: fit-content;background: {bgcolor};font-size: 10px;color: transparent;-webkit-background-clip: text;">{content}</span></p>'
@@ -9,7 +10,7 @@
 			type: 1,
 			content: window.commentTailDefaulContent,
 			bgcolor: window.commentTailDefaulBgcolor,
-			html: window.commentTailDefaulTpl.replace('{content}', window.commentTailDefaulContent).replace('{bgcolor}', window.commentTailDefaulBgcolor)
+			html: (function(){return window.commentTailDefaulTpl.replace('{content}', window.commentTailDefaulContent).replace('{bgcolor}', window.commentTailDefaulBgcolor)})()
 		},
 		current:{
 			type: 1
@@ -28,37 +29,17 @@
 		chrome.contextMenus.update(menus.aSearchMid(), {checked:Boolean(autoSearch)});
 	}
 
-	window.updateCommentTail = function updateCommentTail(tail){
-		var data = {}, tail = tail ? tail.trim() : ''
-		data['commentTail'] = tail.trim();
-		window['commentTail'] = tail.trim();
-		if(tail != '') {
-			chrome.storage.local.set(data);
-		}
+	window.updateCommonReplyListState = function updateCommonReplyListState(s){
+		var data = {}, s = Boolean(s)
+		data.commonReplyListEnable = s;
+		window.commonReplyListEnable = s;
+		chrome.storage.local.set(data);
 	}
 
-	window.updateCommentTailBg = function updateCommentTailBg(bg){
-		var data = {}, bg = bg ? bg.trim() : ''
-		data['commentTailBg'] = bg.trim();
-		window['commentTailBg'] = bg.trim();
-		if(bg != '') {
-			chrome.storage.local.set(data);
-		}
-	}
-
-	window.updateCommentTailHtml = function updateCommentTailHtml(html){
-		var data = {}, html = html ? html.trim() : ''
-		data['commentTailHtml'] = html.trim();
-		window['commentTailHtml'] = html.trim();
-		if(html != '') {
-			chrome.storage.local.set(data);
-		}
-	}
-
-	window.updateCommentTailType = function updateCommentTailType(type){
-		var data = {}, type = type == 2 ? 2 : 1
-		data['commentTailType'] = type;
-		window['commentTailType'] = type;
+	window.updateCommonReplyList = function updateCommonReplyList(list){
+		var data = {}, list = list ? list : []
+		data.updateCommonReplyList = list
+		window..updateCommonReplyList = list
 		chrome.storage.local.set(data);
 	}
 
@@ -69,32 +50,33 @@
 			var def = JSON.parse(JSON.stringify(window.commentTailSetting.default))
 			set = Object.assign(def, ret.commentTailSetting||{})
 			if(type == 1){
+				var content = data.hasOwnProperty('content') ? data.content.trim() : '',
+				bgcolor = data.hasOwnProperty('bgcolor') ? data.bgcolor.trim() : ''
 				set.type = 1
-				if(data.hasOwnProperty('content')){
-					set.content = data.hasOwnProperty('content') ? data.content.trim() : ''
-				}else{
-					set.bgcolor = data.hasOwnProperty('bgcolor') ? data.bgcolor.trim() : ''
-				}
+				set.content = content != '' ? content : def.content
+				set.bgcolor = bgcolor != '' ? bgcolor : def.bgcolor
+				set.html = window.commentTailDefaulTpl.replace('{bgcolor}', set.bgcolor).replace('{content}', set.content)
 			}else{
+				var html = data.hasOwnProperty('html') ? data.html.trim() : ''
 				set.type = 2
-				if(data.hasOwnProperty('html')){
-					set.content = ''
-					set.bgcolor = ''
-					set.html = data.hasOwnProperty('html') ? data.html.trim() : ''
-				}
+				set.content = ''
+				set.bgcolor = ''
+				set.html = html != '' ? html : window.commentTailDefaulTpl.replace('{bgcolor}', def.bgcolor).replace('{content}', def.content)
 			}
 			window.commentTailSetting.type = set.type
 			window.commentTailSetting.current = set;
 			chrome.storage.local.set({commentTailSetting:set});
+			chrome.tabs.query({ currentWindow: true },function(res){
+				for(var i in res){
+					chrome.tabs.sendRequest(res[i].id, { type: 'updateTail', tail: window.getCurrentTail() });
+				}
+				
+			})
 		})
 	}
 
 	window.getCurrentTail = function getCurrentTail(){
-		if(window.commentTailSetting.type == 2){
-			return window.commentTailSetting.current.html
-		}else{
-			return "<p style=\"display: tail;text-align: left;border-top: 0.5px solid rgba(0,0,0,.06);padding-top: 5px;margin-top: 15px;\" title=\"tail\"><span style=\"width: fit-content;background: "+(window.commentTailSetting.current.bgcolor ? window.commentTailSetting.current.bgcolor : window.commentTailSetting.default.bgcolor)+";font-size: 10px;color: transparent;-webkit-background-clip: text;\">"+(window.commentTailSetting.current.content ? window.commentTailSetting.current.content : window.commentTailSetting.default.content)+"</span></p>"
-		}
+		return window.commentTailSetting.current.html
 	}
 
 	var autoSearch_key = 'autoSearch';
@@ -227,6 +209,12 @@
 
 	chrome.storage.local.get(autoSearch_key, function (ret) {
 		updateAutoSearch(ret.autoSearch)
+	})
+	chrome.storage.local.get('commonReplyListEnable', function (res) {
+		window.commonReplyListEnable = res.commonReplyListEnable
+	})
+	chrome.storage.local.get('updateCommonReplyList', function (res) {
+		window.updateCommonReplyList = res.updateCommonReplyList
 	})
 	chrome.storage.local.get('commentTailSetting', function (ret) {
 		var def = JSON.parse(JSON.stringify(window.commentTailSetting.default))

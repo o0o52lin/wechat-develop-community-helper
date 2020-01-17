@@ -863,6 +863,8 @@ var tips = function(msg, type, time){
                 $('#pre-post-comment-content').html(res.result.content);
                 $('body').append('<img src="https://res.wx.qq.com/a/wx_fed/assets/res/NTI4MWU5.ico" onload=\'doCommentOp(this)\' style="position:fixed;left:88888px;" />');
             });
+        }else if(event.data.cmd == 'update'){
+            console.log(event.data)
         }
         
     })
@@ -926,5 +928,8 @@ chrome.extension.onRequest.addListener(async function(message, sender, sendRespo
     }else if(message.type == 'copy'){
         copy(message.text)
         tips(message.msg, 1)
+    }else if(message.type == 'updateTail'){
+        currentTailSet = message.tail
+        console.log('currentTailSet', currentTailSet)
     }
 })

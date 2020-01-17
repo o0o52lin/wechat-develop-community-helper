@@ -16,7 +16,6 @@ var showTail = function(t){
 
 		var content = $('.commentTailArea textarea[name=content]').val().trim() || BGPage.commentTailDefaulContent,
 		bgcolor = $('.commentTailArea textarea[name=bgcolor]').val().trim() || BGPage.commentTailDefaulBgcolor
-		console.log('BGPage',BGPage.commentTailDefaulTpl.replace('{content}', content).replace('{bgcolor}', bgcolor))
 		$('.tail-preview').html(BGPage.commentTailDefaulTpl.replace('{content}', content).replace('{bgcolor}', bgcolor))
 		BGPage.updateCommentTailSetting(1, {content, bgcolor});
 
@@ -25,8 +24,6 @@ var showTail = function(t){
 		$('.commentTailArea.t2').show()
 		$('.commentTailArea.t2 [name=html]').val(BGPage.commentTailSetting.current.html).attr('placeholder', BGPage.commentTailSetting.default.html)
 		var html = $('.commentTailArea textarea[name=html]').val().trim() || BGPage.commentTailSetting.default.html
-		console.log('html',html)
-		console.log('current',BGPage.commentTailSetting.current.html)
 		$('.tail-preview').html(html)
 		BGPage.updateCommentTailSetting(2, {html});
 	}
@@ -36,7 +33,6 @@ $('#autoSearch').on('click', (e)=>{
 })
 $('.commentTailArea textarea').on('blur', function(e){
 	var t = e.currentTarget, val = $(t).val().trim()
-	console.log(e.currentTarget, $(t).attr('name'), val)
 	if($(t).attr('name') == 'html'){
 		$('.tail-preview').html(val||'-- 请输入内容 --')
 		BGPage.updateCommentTailSetting(2, {html:val});
@@ -75,5 +71,10 @@ $('[name=common-reply-list]').prop('checked', BGPage.commonReplyListEnable).on('
 	console.log(e.currentTarget, $(t).prop('checked'))
 	BGPage.updateCommonReplyListState($(e.currentTarget).prop('checked'))
 })
-BGPage.commonReplyListEnable ? $(".common-reply-list").show() : $(".common-reply-list").hide()
-$('[name=codetip]').val(BGPage.codeTipSetting.current||BGPage.codeTipSetting.default).attr('placeholder', BGPage.codeTipSetting.current||BGPage.codeTipSetting.default)
+
+// $('.common-reply-item').on('input', function(e){
+// 	console.log($('.common-reply-list-form'))
+// })
+
+// BGPage.commonReplyListEnable ? $(".common-reply-list").show() : $(".common-reply-list").hide()
+// $('[name="replyItem[codetip]"]').val(BGPage.codeTipSetting.current||BGPage.codeTipSetting.default).attr('placeholder', BGPage.codeTipSetting.current||BGPage.codeTipSetting.default)

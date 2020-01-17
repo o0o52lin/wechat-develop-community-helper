@@ -39,7 +39,7 @@
 	window.updateCommonReplyList = function updateCommonReplyList(list){
 		var data = {}, list = list ? list : []
 		data.updateCommonReplyList = list
-		window..updateCommonReplyList = list
+		window.updateCommonReplyList = list
 		chrome.storage.local.set(data);
 	}
 
@@ -70,7 +70,7 @@
 				for(var i in res){
 					chrome.tabs.sendRequest(res[i].id, { type: 'updateTail', tail: window.getCurrentTail() });
 				}
-				
+				chrome.contextMenus.create({"parentId": this.bmid, "title": '微信社区小组手111', "contexts": ["all"], "documentUrlPatterns": ['*://developers.weixin.qq.com/*']})
 			})
 		})
 	}

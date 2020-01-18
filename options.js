@@ -72,9 +72,9 @@ $('[name=common-reply-list]').prop('checked', BGPage.commonReplyListEnable).on('
 	BGPage.updateCommonReplyListState($(e.currentTarget).prop('checked'))
 })
 
-// $('.common-reply-item').on('input', function(e){
-// 	console.log($('.common-reply-list-form'))
-// })
+$('.common-reply-item').on('input', function(e){
+	console.log($('.common-reply-list-form'))
+})
 
-// BGPage.commonReplyListEnable ? $(".common-reply-list").show() : $(".common-reply-list").hide()
-// $('[name="replyItem[codetip]"]').val(BGPage.codeTipSetting.current||BGPage.codeTipSetting.default).attr('placeholder', BGPage.codeTipSetting.current||BGPage.codeTipSetting.default)
+BGPage.commonReplyListEnable ? $(".common-reply-list").show() : $(".common-reply-list").hide()
+$('[name="codetip"]').val(BGPage.codeTipSetting.current||BGPage.codeTipSetting.default).attr('placeholder', BGPage.codeTipSetting.current||BGPage.codeTipSetting.default)

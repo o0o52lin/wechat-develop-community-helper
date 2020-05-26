@@ -291,7 +291,7 @@ var tips = function(msg, type, time){
     'window.loopAppEditorArr=(tar)=>{'+
     '   var tar = tar||window.app.$children;'+
     '   for(var i in tar){'+
-    '       if($(tar[i].$el).hasClass("edui-default")){console.log(tar[i]);};'+
+    '       if($(tar[i].$el).hasClass("edui-default")){/*console.log(tar[i]);*/};'+
     '       $(tar[i].$el).hasClass("mode__rich-text-editor") && window.answerAppRichEditorArrs.push({uid:tar[i]._uid, el:tar[i].$el, o:tar[i]});'+
     '       $(tar[i].$el).hasClass("frm_control_group_textarea__focus") && window.answerAppEditorArrs.push({uid:tar[i]._uid, el:tar[i].$el, o:tar[i]});'+
     '       $(tar[i].$el).hasClass("js_post_comment_item") && window.replyAppEditorArrs.push({uid:tar[i]._uid, el:tar[i].$el, o:tar[i]});'+
@@ -361,7 +361,7 @@ var tips = function(msg, type, time){
     '                            var toolbar = $(window.answerAppRichEditorArrs[i].o.$el).parents(".post_comment_editor_area").find(".ql-toolbar"), tailOp = toolbar.length ? toolbar.find(".tail-op-bar") : !1;'+
     '                            toolbar.delegate(".tail-op-bar", "click", function(e){hasTail ? window.removeTail(e) : window.addTail(e)});'+
     '                            tailOp.length <= 0 && setTimeout(()=>{'+
-    '                               console.log(tailOp);'+
+    '                               /*console.log(tailOp);*/'+
     '                               hasTail && toolbar.parents(".post_editor_box").find(".tool_bar > :first").before(\'<div class="preview-tail">\'+window.targetCommentTail+\'</div>\');'+
     '                               if(hasTail && !$(".preview-tail").find("span[title=tail]").length){$(".preview-tail")}'+
     '                               toolbar.append(\''+
@@ -428,11 +428,11 @@ var tips = function(msg, type, time){
     '            window.initAppEditorArr();'+
     '            rs();'+
     '        })})().then(res=>{'+
-    '            console.log("initClickReply", window.answerAppEditorArrs);'+
+    '            /*console.log("initClickReply", window.answerAppEditorArrs);*/'+
     '            window.targetAppEditor = false;'+
     '            if($(t).hasClass("best_comment_discuss")){'+
     '                for(var i in window.answerAppRichEditorArrs){'+
-    '                        console.log("answer", i,$(t).parents("li[itemprop=\'answer\']").attr("id"), $(window.answerAppRichEditorArrs[i].el).parents("li").attr("id"),$(window.answerAppRichEditorArrs[i].el));'+
+    '                    /*console.log("answer", i,$(t).parents("li[itemprop=\'answer\']").attr("id"), $(window.answerAppRichEditorArrs[i].el).parents("li").attr("id"),$(window.answerAppRichEditorArrs[i].el));*/'+
     '                    if($(t).parents("li[itemprop=\'answer\']").attr("id") === $(window.answerAppRichEditorArrs[i].el).parents("li").attr("id")){'+
     '                        window.targetAppEditor = window.answerAppRichEditorArrs[i].o;'+
     '                        setTimeout(()=>{'+
@@ -445,7 +445,7 @@ var tips = function(msg, type, time){
     '                               rb.after(\'<div class="reply-preview-tail"></div>\');'+
     '                           }'+
     '                        }, 300);'+
-    '                        console.log("answer", window.targetAppEditor);'+
+    '                        /*console.log("answer", window.targetAppEditor);*/'+
     '                        break;'+
     '                    }'+
     '                }'+
@@ -463,7 +463,7 @@ var tips = function(msg, type, time){
     '                               rb.after(\'<div class="reply-preview-tail"></div>\');'+
     '                           }'+
     '                        }, 300);'+
-    '                        console.log("comment", window.targetAppEditor);'+
+    '                        /*console.log("comment", window.targetAppEditor);*/'+
     '                        break;'+
     '                    }'+
     '                }'+
@@ -473,7 +473,7 @@ var tips = function(msg, type, time){
     '                        if($(t).parents("li[itemprop=\'answer\']").attr("id") === $(window.answerAppRichEditorArrs[i].el).parents("li[itemprop=\'answer\']").attr("id")){'+
     '                            window.targetAppEditor = window.answerAppRichEditorArrs[i].o;'+
     '                            window.takeoverCreateCommentOpt("modify");'+
-    '                            console.log("answerRichEidt", window.targetAppEditor);'+
+    '                            /*console.log("answerRichEidt", window.targetAppEditor);*/'+
     '                            break;'+
     '                        }'+
     '                    }'+
@@ -487,7 +487,7 @@ var tips = function(msg, type, time){
     '                            var toolbar = $(window.targetAppEditor.$el).parents(".post_comment_editor_area").find(".ql-toolbar"), tailOp = toolbar.length ? toolbar.find(".tail-op-bar") : !1;'+
     '                            toolbar.delegate(".tail-op-bar", "click", function(e){window.addTail(e)});'+
     '                            tailOp.length <= 0 && setTimeout(()=>{'+
-    '                               console.log(tailOp);'+
+    '                               /*console.log(tailOp);*/'+
     '                               toolbar.append(\''+
     '                                   <div class="weui-desktop-tooltip__wrp tail-op-bar">'+
     '                                      <button class="mode__rich-text-editor__icon add" type="button"></button>'+
@@ -498,7 +498,7 @@ var tips = function(msg, type, time){
     '                            toolbar.parents(".comment_editor_box").find(".tool_bar .preview-tail").text().trim() == "" && ('+
     '                            toolbar.parents(".comment_editor_box").find(".tool_bar .preview-tail").remove(),'+
     '                            toolbar.parents(".comment_editor_box").find(".tool_bar > :first").before(\'<div class="preview-tail"></div>\'));'+
-    '                            console.log("answerRich", window.targetAppEditor);'+
+    '                            /*console.log("answerRich", window.targetAppEditor);*/'+
     '                            break;'+
     '                        }'+
     '                    }'+
@@ -507,7 +507,7 @@ var tips = function(msg, type, time){
     '                        if($(t).parents("li[itemprop=\'answer\']").attr("id") === $(window.answerAppRichEditorArrs[i].el).parents("li[itemprop=\'answer\']").attr("id")){'+
     '                            window.targetAppEditor = window.answerAppRichEditorArrs[i].o;'+
     '                            window.takeoverCreateCommentOpt("modify");'+
-    '                            console.log("answerRichEidt0", window.targetAppEditor);'+
+    '                            /*console.log("answerRichEidt0", window.targetAppEditor);*/'+
     '                            break;'+
     '                        }'+
     '                    }'+
@@ -749,7 +749,7 @@ var tips = function(msg, type, time){
         }else if($(originElt).hasClass('tail-op-a') && e.button == 0){
             var tmk = new Date().valueOf()
             $(originElt).attr('tarmark', tmk)
-            console.log(currentTailSet)
+            // console.log(currentTailSet)
             if($(originElt).hasClass('add')){
                 $(originElt).parents(".comment_reply_body").siblings(".reply-preview-tail").html(currentTailSet['reply']);
                 window.postMessage({ cmd:"replyAddTail", mark: tmk}, "https://developers.weixin.qq.com");
@@ -773,7 +773,7 @@ var tips = function(msg, type, time){
     })
 
     $('body').delegate('.new-post-btn', 'click', function(e){
-        console.log(currentCommentContent,e)
+        // console.log(currentCommentContent,e)
         currentCommentContent != '' && chrome.runtime.sendMessage({type:"hasTailMark", content:currentCommentContent}, function(res){
             // $(window.targetAppEditor.getContent()).find(".ql-editor").html("123");
             // setTimeout(v.click(), 500);
@@ -865,9 +865,9 @@ var tips = function(msg, type, time){
         }else if(event.data.cmd == 'commentContent'){
             currentCommentContent = event.data.content
             isReply = event.data.type == 'reply' ? true : false
-            console.log(currentCommentContent)
+            // console.log(currentCommentContent)
             chrome.runtime.sendMessage({type:"hasTailMark", content:currentCommentContent, postType, isReply}, function(res){
-                console.log(res, event.data)
+                // console.log(res, event.data)
                 if($('#pre-post-comment-content').length > 0) $('#pre-post-comment-content').remove();
                 $('body').append('<div id="pre-post-comment-content" style="display:none;" data-type="'+event.data.type+'"></div>');
                 $('#pre-post-comment-content').html(res.result.content);
@@ -878,7 +878,7 @@ var tips = function(msg, type, time){
         }else if(event.data.cmd == 'doBlockUser'){
             pageDataInfo = event.data.data.__INITIAL_STATE__ || {}
             blockUsers = event.data.blockUsers || blockUsers
-            console.log('blockUsers', event.data.blockUsers)
+            // console.log('blockUsers', event.data.blockUsers)
             if(!event.data.isCommentBlock){
                 // 全部标签
                 var allRows = pageDataInfo.mixflowList ? (pageDataInfo.mixflowList.rows.length ? pageDataInfo.mixflowList.rows : []) : [],
@@ -888,10 +888,11 @@ var tips = function(msg, type, time){
                 quesRows = pageDataInfo.develop ? (pageDataInfo.develop.hasOwnProperty(1) && pageDataInfo.develop[1].rows.length ? pageDataInfo.develop[1].rows : []) : [],
                 hideOrshow = function(row){
                     var tar = $('li[data-doc-id="'+row.DocId+'"]'), _tar = false
-                    if(tar.length == 1 && row.OpenId in blockUsers && tar.attr('force-show') != 1){
+                    if(!tar.length) return
+                    if(row.OpenId in blockUsers && tar.attr('force-show') != 1){
                         _tar = tar.clone()
                         _tar.children().addClass('plg-hide')
-                        _tar.data('doc-id', '_'+row.DocId).find('>h2').removeClass('plg-hide').html('<a href="javascript:;" style="color: rgb(234, 160, 0);">该条已被你屏蔽(点击查看)</a>').parent()
+                        _tar.find('>h2').removeClass('plg-hide').html('<a href="javascript:;" style="color: rgb(234, 160, 0);">该条已被你屏蔽(点击查看)</a>').parent()
                         .attr('title', blockUsers[row.OpenId]).on('click', function(e){
                             $(this).remove()
                             $('li[data-doc-id="'+row.DocId+'"]').attr('force-show', 1).removeClass('plg-hide')
@@ -900,7 +901,7 @@ var tips = function(msg, type, time){
                         tar.addClass('plg-hide')
                         tar.before(_tar)
                     }else{
-                        tar.length == 1 && !(row.OpenId in blockUsers) && tar.hasClass('plg-hide') && tar.removeClass('plg-hide')
+                        !(row.OpenId in blockUsers) && tar.hasClass('plg-hide') && tar.removeClass('plg-hide')
                     }
                     
                 },
@@ -914,32 +915,24 @@ var tips = function(msg, type, time){
                 // 评论列表
                 var commentRows = pageDataInfo.doc && pageDataInfo.doc.Comments ? (pageDataInfo.doc.Comments.rows.length ? pageDataInfo.doc.Comments.rows : []) : [],
                 hideOrshow = function(row){
-                    var tar = $('li[id="'+row.CommentId+'"]'), _tar = false
-                    if(tar.length == 1 && row.OpenId in blockUsers && tar.attr('force-show') != 1){
-                        _tar = tar.clone()
-                        _tar.children().addClass('plg-hide')
-                        _tar.data('doc-id', '_'+row.DocId).find('>h2').removeClass('plg-hide').html('<a href="javascript:;" style="color: rgb(234, 160, 0);">该条已被你屏蔽(点击查看)</a>').parent()
-                        .attr('title', blockUsers[row.OpenId]).on('click', function(e){
-                            $(this).remove()
-                            $('li[data-doc-id="'+row.DocId+'"]').attr('force-show', 1).removeClass('plg-hide')
-                        })
-
+                    var tar = $('li[id="'+row.CommentId+'"]')
+                    if(!tar.length) return
+                    if(row.OpenId in blockUsers && tar.attr('force-show') != 1){
                         tar.addClass('plg-hide')
-                        tar.before(_tar)
                     }else{
-                        tar.length == 1 && !(row.OpenId in blockUsers) && tar.hasClass('plg-hide') && tar.removeClass('plg-hide')
+                        !(row.OpenId in blockUsers) && tar.hasClass('plg-hide') && tar.removeClass('plg-hide')
                     }
                     
                 }
-                console.log('commentRows', commentRows)
+                // console.log('commentRows', commentRows)
                 for (var i in commentRows) {
                     if(commentRows[i].OpenId in blockUsers){
                         $('li[id="'+commentRows[i].CommentId+'"]').css({display:'none'})
                     }else{
                         var subCommentRows = commentRows[i].Sub && commentRows[i].Sub.length ? commentRows[i].Sub : []
-                        console.log('subCommentRows', subCommentRows)
+                        // console.log('subCommentRows', subCommentRows)
                         for (var i in subCommentRows) {
-                            console.log(subCommentRows[i].OpenId,' in ', blockUsers, subCommentRows[i].OpenId in blockUsers)
+                            // console.log(subCommentRows[i].OpenId,' in ', blockUsers, subCommentRows[i].OpenId in blockUsers)
                             subCommentRows[i].OpenId in blockUsers && $('li[id="'+subCommentRows[i].CommentId+'"]').css({display:'none'})
                         }
                     }
@@ -961,7 +954,6 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse)
 });
 
 chrome.extension.onRequest.addListener(async function(message, sender, sendResponse) {
-        console.log(' message.users ', message.users )
     if(message.type == 'getUserScore'){
         if(!message.openid) return
         var user = await getUserInfo(message.openid)
@@ -1019,6 +1011,5 @@ chrome.extension.onRequest.addListener(async function(message, sender, sendRespo
         tips(message.msg, 1)
     }else if(message.type == 'updateTail'){
         currentTailSet = message.tail
-        console.log('currentTailSet', currentTailSet)
     }
 })

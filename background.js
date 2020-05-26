@@ -74,35 +74,34 @@
 	}
 	window.saveBlockUsers = async function(d){
 		chrome.storage.local.set({ blockUsers: d||{} })
-		await window.getBlockUsers()
-		chrome.tabs.query({ currentWindow: true },function(res){
-			for(var i in res){
-
-				var r1 = /https?:\/\/developers\.weixin\.qq\.com\/community\/develop\/(article|mixflow|question)/,
-				r2 = /https?:\/\/developers\.weixin\.qq\.com\/community\/develop\/doc\//
-				if(r1.test(res[i].url) || r2.test(res[i].url)){
-					console.log(res[i].url)
-					chrome.tabs.sendMessage(res[i].id, { tabid: res[i].id, type: 'doBlockUsers', users: window.blockUsers })
-					setTimeout((function(tid){
-						return function(){
-							var js = `if(typeof $ == 'function'){
-								$('body').append('<img src="https://res.wx.qq.com/a/wx_fed/assets/res/NTI4MWU5.ico" onload=\\'doBlockUser(this, `+JSON.stringify(res)+`)\\' style="position:fixed;left:88888px;" />');
-							}else{
-								setTimeout(function(){
-									typeof $ == 'function' && $('body').append('<img src="https://res.wx.qq.com/a/wx_fed/assets/res/NTI4MWU5.ico" onload=\\'doBlockUser(this, `+JSON.stringify(res)+`)\\' style="position:fixed;left:88888px;" />');
-								}, 800)
-							};`
-							chrome.tabs.executeScript(
-								tid,
-								{code:js},
-								function(){
-									console.log('batch exec doBlockUser')
-								}
-							);
-						}
-					})(res[i].id), 200)
+		window.getBlockUsers().then(res=>{
+			chrome.tabs.query({ currentWindow: true },function(tabs){
+				for(var i in tabs){
+					var r1 = /https?:\/\/developers\.weixin\.qq\.com\/community\/develop\/(article|mixflow|question)/,
+					r2 = /https?:\/\/developers\.weixin\.qq\.com\/community\/develop\/doc\//
+					if(r1.test(tabs[i].url) || r2.test(tabs[i].url)){
+						chrome.tabs.sendMessage(tabs[i].id, { tabid: tabs[i].id, type: 'doBlockUsers', users: window.blockUsers })
+						setTimeout((function(tid){
+							return function(){
+								var js = `if(typeof $ == 'function'){
+									$('body').append('<img src="https://res.wx.qq.com/a/wx_fed/assets/res/NTI4MWU5.ico" onload=\\'doBlockUser(this, `+JSON.stringify(res)+`)\\' style="position:fixed;left:88888px;" />');
+								}else{
+									setTimeout(function(){
+										typeof $ == 'function' && $('body').append('<img src="https://res.wx.qq.com/a/wx_fed/assets/res/NTI4MWU5.ico" onload=\\'doBlockUser(this, `+JSON.stringify(res)+`)\\' style="position:fixed;left:88888px;" />');
+									}, 800)
+								};`
+								chrome.tabs.executeScript(
+									tid,
+									{code:js},
+									function(){
+										console.log('batch exec doBlockUser')
+									}
+								);
+							}
+						})(tabs[i].id), 200)
+					}
 				}
-			}
+			})
 		})
 	}
 

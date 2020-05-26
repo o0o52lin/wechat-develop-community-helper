@@ -924,16 +924,15 @@ var tips = function(msg, type, time){
                     }
                     
                 }
-                // console.log('commentRows', commentRows)
+                console.log('commentRows', commentRows)
                 for (var i in commentRows) {
                     if(commentRows[i].OpenId in blockUsers){
-                        $('li[id="'+commentRows[i].CommentId+'"]').css({display:'none'})
+                        hideOrshow(commentRows[i])
                     }else{
                         var subCommentRows = commentRows[i].Sub && commentRows[i].Sub.length ? commentRows[i].Sub : []
-                        // console.log('subCommentRows', subCommentRows)
+                        console.log('subCommentRows', subCommentRows)
                         for (var i in subCommentRows) {
-                            // console.log(subCommentRows[i].OpenId,' in ', blockUsers, subCommentRows[i].OpenId in blockUsers)
-                            subCommentRows[i].OpenId in blockUsers && $('li[id="'+subCommentRows[i].CommentId+'"]').css({display:'none'})
+                            hideOrshow(subCommentRows[i])
                         }
                     }
                 }

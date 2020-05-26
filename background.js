@@ -74,7 +74,9 @@
 	}
 	window.saveBlockUsers = async function(d){
 		chrome.storage.local.set({ blockUsers: d||{} })
+			console.log(d)
 		window.getBlockUsers().then(res=>{
+			console.log(res)
 			chrome.tabs.query({ currentWindow: true },function(tabs){
 				for(var i in tabs){
 					var r1 = /https?:\/\/developers\.weixin\.qq\.com\/community\/develop\/(article|mixflow|question)/,

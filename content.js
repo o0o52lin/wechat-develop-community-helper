@@ -887,12 +887,12 @@ var tips = function(msg, type, time){
                 // 问答标签
                 quesRows = pageDataInfo.develop ? (pageDataInfo.develop.hasOwnProperty(1) && pageDataInfo.develop[1].rows.length ? pageDataInfo.develop[1].rows : []) : [],
                 hideOrshow = function(row){
-                    var tar = $('li[data-doc-id="'+row.DocId+'"]'), _tar = false
+                    var tar = $('li[data-doc-id="'+row.DocId+'"]'), blockOneCls = 'block-user-item-'+row.DocId, _tar = false
                     if(!tar.length) return
                     if(row.OpenId in blockUsers && tar.attr('force-show') != 1){
                         _tar = tar.clone()
                         _tar.children().addClass('plg-hide')
-                        _tar.find('>h2').removeClass('plg-hide').html('<a href="javascript:;" style="color: rgb(234, 160, 0);">该条已被你屏蔽(点击查看)</a>').parent()
+                        _tar.addClass(blockOneCls).find('>h2').removeClass('plg-hide').html('<a href="javascript:;" style="color: rgb(234, 160, 0);">该条已被你屏蔽(点击查看)</a>').parent()
                         .attr('title', blockUsers[row.OpenId]).on('click', function(e){
                             $(this).remove()
                             $('li[data-doc-id="'+row.DocId+'"]').attr('force-show', 1).removeClass('plg-hide')
@@ -901,7 +901,7 @@ var tips = function(msg, type, time){
                         tar.addClass('plg-hide')
                         tar.before(_tar)
                     }else{
-                        !(row.OpenId in blockUsers) && tar.hasClass('plg-hide') && tar.removeClass('plg-hide')
+                        !(row.OpenId in blockUsers) && (tar.hasClass('plg-hide') && tar.removeClass('plg-hide'), $('.'+blockOneCls).remove())
                     }
                     
                 },

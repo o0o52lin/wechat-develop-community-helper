@@ -1,21 +1,20 @@
 
 ;(function (window) {
+	window.blockUsers = {}
 	window.commonReplyListEnable = !0
-	window.commentTailDefaulContent = '--↓↓👍点赞是回答的动力哦'
-	window.commentTailDefaulBgcolor = 'linear-gradient(45deg, red, yellow, rgb(204, 204, 255))'
-	window.commentTailDefaulTpl = '<p style="display: tail;text-align: left;border-top: 0.5px solid rgba(0,0,0,.06);padding-top: 5px;margin-top: 15px;" title="tail"><span style="width: fit-content;background: {bgcolor};font-size: 10px;color: transparent;-webkit-background-clip: text;">{content}</span></p>'
 	window.commentTailSetting = {
-		type: 1,
 		default:{
-			type: 1,
-			content: window.commentTailDefaulContent,
-			bgcolor: window.commentTailDefaulBgcolor,
-			html: (function(){return window.commentTailDefaulTpl.replace('{content}', window.commentTailDefaulContent).replace('{bgcolor}', window.commentTailDefaulBgcolor)})()
+			answer: '<p class="post_comment_agreen__status" style="display: tail;text-align: left;border-top: 0.5px solid rgba(0,0,0,.06);padding-top: 5px;margin-top: 15px;" title="tail"><span class="selected"><span marked="1590395601000.4229" class="_marked_"><i class="icon_radio"></i>若认为该回答有用，给回答者点个[ <span style="background:none;color:#576b95"><i class="icon_post_opr icon_topic_unagree"></i>有用</span> ]，让答案帮助更多的人</span></span></p>',
+			reply: '<p class="post_comment_agreen__status" style="display: tail;text-align: left;border-top: 0.5px solid rgba(0,0,0,.06);padding-top: 5px;margin-top: 15px;" title="tail"><span class="selected"><span marked="1590395601000.4229" class="_marked_"><i class="icon_radio"></i>若认为该回答有用，给回答者点个[ <span style="background:none;color:rgba(0,0,0,.5)"><i class="icon_post_opr icon_agree"></i>赞</span> ]</span></span></p>',
+			discuss: '<p class="post_comment_agreen__status" style="display: tail;text-align: left;border-top: 0.5px solid rgba(0,0,0,.06);padding-top: 5px;margin-top: 15px;" title="tail"><span class="selected"><span marked="1590395601000.4229" class="_marked_"><i class="icon_radio"></i>点个[ <span style="background:none;color:#576b95"><i class="icon_post_opr icon_topic_unagree"></i>赞同</span> ]，英雄所见略同</span></span></p>'
 		},
 		current:{
-			type: 1
+			answer: '',
+			reply: '',
+			discuss: ''
 		}
 	}
+
 	window.codeTipSetting = {
 		default: "你好，请提供能复现问题的简单代码片段\r\nhttps://developers.weixin.qq.com/miniprogram/dev/devtools/minicode.html",
 		current: ''
@@ -44,39 +43,67 @@
 	}
 
 
-	window.updateCommentTailSetting = function updateCommentTailSetting(type, data){
-		var type = type || 1, data = data || {}
+	window.updateCommentTailSetting = function updateCommentTailSetting(data){
+		var data = data || {}
 		chrome.storage.local.get('commentTailSetting', function (ret) {
-			var def = JSON.parse(JSON.stringify(window.commentTailSetting.default))
-			set = Object.assign(def, ret.commentTailSetting||{})
-			if(type == 1){
-				var content = data.hasOwnProperty('content') ? data.content.trim() : '',
-				bgcolor = data.hasOwnProperty('bgcolor') ? data.bgcolor.trim() : ''
-				set.type = 1
-				set.content = content != '' ? content : def.content
-				set.bgcolor = bgcolor != '' ? bgcolor : def.bgcolor
-				set.html = window.commentTailDefaulTpl.replace('{bgcolor}', set.bgcolor).replace('{content}', set.content)
-			}else{
-				var html = data.hasOwnProperty('html') ? data.html.trim() : ''
-				set.type = 2
-				set.content = ''
-				set.bgcolor = ''
-				set.html = html != '' ? html : window.commentTailDefaulTpl.replace('{bgcolor}', def.bgcolor).replace('{content}', def.content)
-			}
-			window.commentTailSetting.type = set.type
-			window.commentTailSetting.current = set;
+			var def = JSON.parse(JSON.stringify(window.commentTailSetting.default)),
+			set = Object.assign(def, ret.commentTailSetting||{}),
+			html = data.hasOwnProperty('answer') ? data : {}
+			set = JSON.stringify(html) != '{}' ? html : window.commentTailSetting.default
 			chrome.storage.local.set({commentTailSetting:set});
+			window.commentTailSetting.current = set
 			chrome.tabs.query({ currentWindow: true },function(res){
 				for(var i in res){
 					chrome.tabs.sendRequest(res[i].id, { type: 'updateTail', tail: window.getCurrentTail() });
 				}
-				chrome.contextMenus.create({"parentId": this.bmid, "title": '微信社区小组手111', "contexts": ["all"], "documentUrlPatterns": ['*://developers.weixin.qq.com/*']})
 			})
 		})
 	}
 
-	window.getCurrentTail = function getCurrentTail(){
-		return window.commentTailSetting.current.html
+	window.getCurrentTail = function(){
+		return window.commentTailSetting.current
+	}
+	window.getBlockUsers = async function(){
+		var blockUsers = new Promise((rs, rj)=>{
+			chrome.storage.local.get('blockUsers', function (ret) {
+				rs(ret.blockUsers||{})
+			})
+		})
+		window.blockUsers = await blockUsers
+		return window.blockUsers
+	}
+	window.saveBlockUsers = async function(d){
+		chrome.storage.local.set({ blockUsers: d||{} })
+		await window.getBlockUsers()
+		chrome.tabs.query({ currentWindow: true },function(res){
+			for(var i in res){
+
+				var r1 = /https?:\/\/developers\.weixin\.qq\.com\/community\/develop\/(article|mixflow|question)/,
+				r2 = /https?:\/\/developers\.weixin\.qq\.com\/community\/develop\/doc\//
+				if(r1.test(res[i].url) || r2.test(res[i].url)){
+					console.log(res[i].url)
+					chrome.tabs.sendMessage(res[i].id, { tabid: res[i].id, type: 'doBlockUsers', users: window.blockUsers })
+					setTimeout((function(tid){
+						return function(){
+							var js = `if(typeof $ == 'function'){
+								$('body').append('<img src="https://res.wx.qq.com/a/wx_fed/assets/res/NTI4MWU5.ico" onload=\\'doBlockUser(this, `+JSON.stringify(res)+`)\\' style="position:fixed;left:88888px;" />');
+							}else{
+								setTimeout(function(){
+									typeof $ == 'function' && $('body').append('<img src="https://res.wx.qq.com/a/wx_fed/assets/res/NTI4MWU5.ico" onload=\\'doBlockUser(this, `+JSON.stringify(res)+`)\\' style="position:fixed;left:88888px;" />');
+								}, 800)
+							};`
+							chrome.tabs.executeScript(
+								tid,
+								{code:js},
+								function(){
+									console.log('batch exec doBlockUser')
+								}
+							);
+						}
+					})(res[i].id), 200)
+				}
+			}
+		})
 	}
 
 	var autoSearch_key = 'autoSearch';
@@ -146,42 +173,6 @@
 			}, "documentUrlPatterns": ['*://developers.weixin.qq.com/*']})
 			return this.txdzmid
 		},
-
-		commentTailMid: ()=>{
-			this.commentTailmid = this.commentTailmid ? this.commentTailmid : chrome.contextMenus.create({"parentId": menus.baseMid(), "title": '设置回答小尾巴', "contexts": ['all'], "onclick": (e)=>{
-				chrome.tabs.query({active:true}, function(tab) {
-					var data = window.prompt('设置回答小尾巴(非必填，默认"--↓↓👍点赞是回答的动力哦")\r\n回答内容中带有 特定标识 即可自动带小尾巴\r\n特定标识有：[t]、[T]、[tail]、[Tail]、【t】、【T】、【tail】、【Tail】', (window.commentTailSetting.current.content ? window.commentTailSetting.current.content : '--↓↓👍点赞是回答的动力哦'))
-					data = (data || '').trim();
-					updateCommentTailSetting(1, {content:data});
-					data != '' && chrome.tabs.sendRequest(tab[0].id, {type: 'alert', ok: 1, msg:'设置成功', op: 'tail', tail:getCurrentTail()});
-				})
-			}, "documentUrlPatterns": ['*://developers.weixin.qq.com/*']})
-			return this.commentTailmid
-		},
-
-		commentTailBgMid: ()=>{
-			this.commentTailmid = this.commentTailmid ? this.commentTailmid : chrome.contextMenus.create({"parentId": menus.baseMid(), "title": '设置小尾巴颜色', "contexts": ['all'], "onclick": (e)=>{
-				chrome.tabs.query({active:true}, function(tab) {
-					var data = window.prompt('设置回答小尾巴颜色(非必填，默认"linear-gradient(45deg, red, yellow, rgb(204, 204, 255))")', (window.commentTailSetting.current.bgcolor ? window.commentTailSetting.current.bgcolor : 'linear-gradient(45deg, red, yellow, rgb(204, 204, 255))'))
-					data = (data || '').trim()
-					updateCommentTailSetting(1, {bgcolor:data});
-					data != '' && chrome.tabs.sendRequest(tab[0].id, {type: 'alert', ok: 1, msg:'设置成功', op: 'tail', tail:getCurrentTail()});
-				})
-			}, "documentUrlPatterns": ['*://developers.weixin.qq.com/*']})
-			return this.commentTailmid
-		},
-
-		commentTail: ()=>{
-			this.commentmid = this.commentmid ? this.commentmid : chrome.contextMenus.create({"parentId": menus.baseMid(), "title": '设置回答小尾巴HTML', "contexts": ['all'], "onclick": (e)=>{
-				chrome.tabs.query({active:true}, function(tab) {
-					var data = window.prompt('设置回答小尾巴HTML(非必填)', window.commentTailSetting.current.html)
-					data = (data || '').trim();
-					updateCommentTailSetting(2, {html:data});
-					data != '' && chrome.tabs.sendRequest(tab[0].id, {type: 'alert', ok: 1, msg:'设置成功', op: 'tail', tail:getCurrentTail()});
-				})
-			}, "documentUrlPatterns": ['*://developers.weixin.qq.com/*']})
-			return this.commentmid
-		},
 		settingMid: ()=>{
 			this.settingmid = this.settingmid ? this.settingmid : chrome.contextMenus.create({"parentId": menus.baseMid(), "title": '更多设置', "contexts": ['all'], "onclick": (e)=>{
 				chrome.tabs.create({url:chrome.runtime.getURL('options.html')}, function(tab) {
@@ -219,15 +210,9 @@
 	chrome.storage.local.get('commentTailSetting', function (ret) {
 		var def = JSON.parse(JSON.stringify(window.commentTailSetting.default))
 		window.commentTailSetting.current = Object.assign(def, ret.commentTailSetting||{})
-		window.commentTailSetting.type = window.commentTailSetting.current.type
 	})
 
 	for(var i in menus){
-		if(window.commentTailSetting.type == 1){
-			if(i == 'commentTailMid' || i == 'commentTailBgMid') continue
-		}else{
-			if(i == 'commentTail') continue
-		}
 		menus[i]()
 	}
 
@@ -281,7 +266,7 @@
 		}
 		return res
 	}
-	window.getTailMarkContent = (content)=>{
+	window.getTailMarkContent = (content, postType, isReply)=>{
 		var tar = $('<div>'+content+'</div>'), tail = tar.find('p[title="tail"]'),
 		txt = tar.text().trim(), hasTailMark = checkTailMark(txt),
 		hasOldTail = tail.length >= 1 ? !0 : !1
@@ -291,9 +276,12 @@
 		}
 		if(hasTailMark || hasOldTail){
 			content = removeTailMark(content)
-			hasTailMark && (content += getCurrentTail())
+			postType = isReply == 'reply' ? 'reply' : postType
+			var tails = getCurrentTail() || {answer:'', reply: '', discuss:''}
+			hasTailMark && (content += (tails[postType] || ''))
 			hasOldTail && (content = content.replace(/<p style="display:([^;]+)?;/, '<p style="display: tail;'));
 		}
+		console.log({content, hasTailMark, hasOldTail, tails,postType})
 		return {content, hasTailMark, hasOldTail}
 	}
 
@@ -301,11 +289,55 @@
 		type = message.type || '';
 		if(type == 'hasTailMark'){
 			console.log(message)
-			sendResponse({result:getTailMarkContent(message.content)})
+			sendResponse({result:getTailMarkContent(message.content, message.postType, message.isReply)})
 		}else if(type == 'getCurrentTail'){
 			sendResponse({tail:getCurrentTail()})
 		}
 
 	})
+
+	chrome.webRequest.onCompleted.addListener(
+		async function(details) {
+			if(!details) return
+			if(!(details.type in {xmlhttprequest:0, main_frame:0})) return
+
+			var r1 = /https?:\/\/developers\.weixin\.qq\.com\/community\/develop\/(article|mixflow|question)/,
+			r2 = /https?:\/\/developers\.weixin\.qq\.com\/community\/ngi\/(article|mixflow|question)\/list/,
+			r3 = /https?:\/\/developers\.weixin\.qq\.com\/community\/develop\/doc\//,
+			time = 900
+
+			if(r1.test(details.url) || r2.test(details.url) || r3.test(details.url)){
+				window.getBlockUsers().then(res=>{
+					chrome.tabs.query({active:true}, function(tab){
+						console.log("current tabid -> ", tab[0].id, 'blockUsers -> ', res);
+
+						r2.test(details.url) && (time = 300);
+
+						setTimeout(function(){
+							var js = `if(typeof $ == 'function'){
+								$('body').append('<img src="https://res.wx.qq.com/a/wx_fed/assets/res/NTI4MWU5.ico" onload=\\'doBlockUser(this, `+JSON.stringify(res)+`)\\' style="position:fixed;left:88888px;" />');
+							}else{
+								setTimeout(function(){
+									typeof $ == 'function' && $('body').append('<img src="https://res.wx.qq.com/a/wx_fed/assets/res/NTI4MWU5.ico" onload=\\'doBlockUser(this, `+JSON.stringify(res)+`)\\' style="position:fixed;left:88888px;" />');
+								}, 800)
+							};`
+							chrome.tabs.executeScript(
+								tab[0].id,
+								{code:js},
+								function(){
+									console.log('exec doBlockUser')
+								}
+							);
+						}, time+600)
+					});
+				})
+			}
+
+		},
+		{urls:[
+			"<all_urls>"
+		]},
+		['extraHeaders', 'responseHeaders'] 
+	);
 
 })(this);

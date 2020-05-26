@@ -111,7 +111,10 @@
             -webkit-border-radius: 0 0 5px 5px;
             color: #fff;
         }
-        .commentTailArea, .common-reply-list{
+        .commentTailArea{
+            /*display: none*/
+        }
+        .common-reply-list{
             display: none
         }
         a:link {color: blue; text-decoration:none;}
@@ -160,6 +163,71 @@
         .tail-preview{
             padding-left: 65px;
         }
+        .blockOnes{
+            margin-bottom: 15px;
+        }
+        .block-one{
+            border: 1px dashed #ccc;
+            padding: 5px;
+            margin-right: 5px;
+        }
+        .del{
+            height: 18px;
+            display: inline-block;
+            width: 18px;
+            text-align: center;
+            background: #ccc;
+            border-radius: 50%;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+        .btn_primary {
+            box-sizing: border-box;
+            padding: 0 22px;
+            min-width: 30px;
+
+            display: inline-block;
+            overflow: visible;
+            padding: 0 22px;
+            height: 30px;
+            line-height: 28px;
+            *line-height: 28px;
+            vertical-align: middle;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 3px;
+            -moz-border-radius: 3px;
+            -webkit-border-radius: 3px;
+            font-size: 14px;
+            border-width: 1px;
+            border-style: solid;
+            cursor: pointer;
+            border-radius: 4px;
+            height: 32px;
+            line-height: 32px
+        }
+
+
+
+
+
+        .post_comment_agreen__status {
+            color: #07c160
+        }
+        .icon_checkbox,.icon_radio {
+            margin-right: 6px;
+            margin-top: -2px;
+            *margin-top: 0
+        }
+
+        .icon_radio {
+            display: inline-block;
+            vertical-align: middle;
+            background: url(https://res.wx.qq.com/community/dist/community/images/selected_1b8724.svg) no-repeat 50%;
+            width: 15px;
+            height: 15px;
+            background-size: contain
+        }
     </style>
     <script src="js/jquery.min.js"></script>
 </head>
@@ -169,7 +237,6 @@
 
     <div id="content-wrap" class="form-horizontal">
         <div class="form-group">
-            <p class="tips">如果已经设置浏览器主页后仍然无效，可以启用此选项自动打开主页，选择喜欢的导航</p>
             <label class="col-sm-2 control-label fw700">
                 选中自动查询:
             </label>
@@ -180,78 +247,47 @@
                     </label>
                 </div>
             </div>
-            <!-- <div id="choose-homepage" class="form-group">
-                <div class="col-sm-offset col-sm-10">
-
-                    <div>
-                        <label>选择下面其中一个网址为主页</label>
-                    </div>
-
-                    <div class="radio">
-                        <label>
-                            <input type="radio" name="homepage" class="homepage" value="http://123.hao245.com">
-                            http://123.hao245.com
-                        </label>
-                    </div>
-
-                    <div class="radio">
-                        <label>
-                            <input type="radio" name="homepage" class="homepage" value="http://360.hao245.com">
-                            http://360.hao245.com
-                        </label>
-                    </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-2 control-label fw700">
+                屏蔽某人:
+            </label>
+            <div class="col-sm-10">
+                <div class="checkbox">
+                    <input style="width: 80%;height: 30px;" name="blockUser" placeholder="填写其openid或主页链接" title="填写其openid或主页链接" />
+                    <p>当前屏蔽: </p>
+                    <div class="blockOnes"></div>
                 </div>
-            </div> -->
+            </div>
         </div>
         <div class="form-group">
             <label class="col-sm-2 control-label fw700">
                 回答小尾巴:
             </label>
-            <div class="col-sm-10 pt7">
-                <div class="radio">
-                    <label>
-                        <input type="radio" name="ctType" class="homepage commentTailType t1" value="1" /> 菜鸟版
-                    </label>
-                    <label>
-                        <input type="radio" name="ctType" class="homepage commentTailType t2" value="2" /> 大佬版
-                    </label>
-                </div>
-            </div>
-            <div class="form-group commentTailArea t1">
-                <div class="col-sm-offset col-sm-10">
-                    <div class="form-group">
-                        <label class="sub-item control-label fw700">
-                            显示内容:
-                        </label>
-                        <div class="col-sm-10">
-                            <div class="checkbox">
-                                <textarea name="content" cols="80" rows="5"></textarea>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="sub-item control-label fw700">
-                            显示颜色:
-                        </label>
-                        <div class="col-sm-10">
-                            <div class="checkbox">
-                                <textarea name="bgcolor" cols="80" rows="5"></textarea>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
             <div class="form-group commentTailArea t2">
-                <div class="col-sm-offset col-sm-10">
-                    <div class="form-group">
-                        <label class="sub-item control-label fw700">
-                            显示HTML:
-                        </label>
-                        <div class="col-sm-10">
-                            <div class="checkbox">
-                                <textarea name="html" cols="80" rows="15"></textarea>
-                            </div>
-                        </div>
+                <div class="col-sm-10">
+                    <div class="checkbox">
+                        <textarea name="answer" cols="80" rows="8"></textarea>
+                    </div>
+                </div>
+            </div>
+            <label class="col-sm-2 control-label fw700">
+                回复小尾巴:
+            </label>
+            <div class="form-group commentTailArea t2">
+                <div class="col-sm-10">
+                    <div class="checkbox">
+                        <textarea name="reply" cols="80" rows="8"></textarea>
+                    </div>
+                </div>
+            </div>
+            <label class="col-sm-2 control-label fw700">
+                话题/评论小尾巴:
+            </label>
+            <div class="form-group commentTailArea t2">
+                <div class="col-sm-10">
+                    <div class="checkbox">
+                        <textarea name="discuss" cols="80" rows="8"></textarea>
                     </div>
                 </div>
             </div>
@@ -263,7 +299,7 @@
                 </div>
             </div>
         </div>
-        <div class="form-group">
+        <div class="form-group" style="display: none">
             <form class="common-reply-list-form">
                 <label class="col-sm-2 control-label fw700">
                     常用回复列表:
@@ -300,6 +336,16 @@
                     </div>
                 </div>
             </form>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-2 control-label fw700">&nbsp;</label>
+            <div class="col-sm-10">
+                <div class="checkbox">
+                    <label>
+                        <button class="submit btn_primary">保&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;存</button>
+                    </label>
+                </div>
+            </div>
         </div>
     </div>
 

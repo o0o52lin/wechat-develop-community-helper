@@ -1,67 +1,89 @@
 var BGPage = chrome.extension.getBackgroundPage();
 var pluginInfo = chrome.runtime.getManifest()
-
-console.log(BGPage)
+var blockUsers =  BGPage.getBlockUsers()
+console.log(BGPage,blockUsers)
 $('.plugin-name').html(pluginInfo.name)
 $('#versionNumber').html(pluginInfo.version)
 $('.year').html(new Date().getFullYear())
 $('#autoSearch').prop('checked', Boolean(BGPage.autoSearch))
+var initBlockUsers = async function (){
+	var bus = []
 
-var showTail = function(t){
-	if(t == 1){
-		$('.commentTailArea.t2').hide()
-		$('.commentTailArea.t1').show()
-		$('.commentTailArea.t1 [name=content]').val(BGPage.commentTailSetting.current.content||BGPage.commentTailSetting.default.content).attr('placeholder', BGPage.commentTailSetting.current.content || BGPage.commentTailSetting.default.content)
-		$('.commentTailArea.t1 [name=bgcolor]').val(BGPage.commentTailSetting.current.bgcolor||BGPage.commentTailSetting.default.bgcolor).attr('placeholder', BGPage.commentTailSetting.current.bgcolor || BGPage.commentTailSetting.default.bgcolor)
-
-		var content = $('.commentTailArea textarea[name=content]').val().trim() || BGPage.commentTailDefaulContent,
-		bgcolor = $('.commentTailArea textarea[name=bgcolor]').val().trim() || BGPage.commentTailDefaulBgcolor
-		$('.tail-preview').html(BGPage.commentTailDefaulTpl.replace('{content}', content).replace('{bgcolor}', bgcolor))
-		BGPage.updateCommentTailSetting(1, {content, bgcolor});
-
-	}else{
-		$('.commentTailArea.t1').hide()
-		$('.commentTailArea.t2').show()
-		$('.commentTailArea.t2 [name=html]').val(BGPage.commentTailSetting.current.html).attr('placeholder', BGPage.commentTailSetting.default.html)
-		var html = $('.commentTailArea textarea[name=html]').val().trim() || BGPage.commentTailSetting.default.html
-		$('.tail-preview').html(html)
-		BGPage.updateCommentTailSetting(2, {html});
+	blockUsers = await blockUsers
+	for (var i in blockUsers) {
+		bus.push('<span class="block-one"><a title="访问其主页" href="https://developers.weixin.qq.com/community/personal/'+i+'" target="_blank">'+blockUsers[i]+'</a><span class="del" title="取消屏蔽" data-openid="'+i+'">x</span></span>')
 	}
+	$('.blockOnes').empty().html(bus.join(''))
+}
+initBlockUsers()
+var showTail = function(type){
+	var answer = $('.commentTailArea textarea[name=answer]').val().trim() || BGPage.commentTailSetting.default.answer,
+		reply = $('.commentTailArea textarea[name=reply]').val().trim() || BGPage.commentTailSetting.default.reply,
+		discuss = $('.commentTailArea textarea[name=discuss]').val().trim() || BGPage.commentTailSetting.default.discuss
+	$('.commentTailArea [name=answer]').val(BGPage.commentTailSetting.current.answer).attr('placeholder', BGPage.commentTailSetting.default.answer)
+	$('.commentTailArea [name=reply]').val(BGPage.commentTailSetting.current.reply).attr('placeholder', BGPage.commentTailSetting.default.reply)
+	$('.commentTailArea [name=discuss]').val(BGPage.commentTailSetting.current.discuss).attr('placeholder', BGPage.commentTailSetting.default.discuss)
+	$('.tail-preview').html(type == 'reply' ? reply : (type == 'discuss' ? discuss : answer))
+},
+saveTail = function(){
+	var answer = $('.commentTailArea textarea[name=answer]').val().trim() || BGPage.commentTailSetting.default.answer,
+		reply = $('.commentTailArea textarea[name=reply]').val().trim() || BGPage.commentTailSetting.default.reply,
+		discuss = $('.commentTailArea textarea[name=discuss]').val().trim() || BGPage.commentTailSetting.default.discuss
+	BGPage.updateCommentTailSetting({answer,reply,discuss});
 }
 $('#autoSearch').on('click', (e)=>{
 	BGPage.updateAutoSearch($(e.currentTarget).prop('checked'))
 })
-$('.commentTailArea textarea').on('blur', function(e){
-	var t = e.currentTarget, val = $(t).val().trim()
-	if($(t).attr('name') == 'html'){
-		$('.tail-preview').html(val||'-- 请输入内容 --')
-		BGPage.updateCommentTailSetting(2, {html:val});
-	}else{
-		var content = $('.commentTailArea textarea[name=content]').val().trim() || BGPage.commentTailDefaulContent,
-		bgcolor = $('.commentTailArea textarea[name=bgcolor]').val().trim() || BGPage.commentTailDefaulBgcolor
-		BGPage.updateCommentTailSetting(1, {content, bgcolor});
-		content =  content || '-- 请输显示入内容 --'
-		$('.tail-preview').html(BGPage.commentTailDefaulTpl.replace('{content}', content).replace('{bgcolor}', bgcolor))
-	}
+$('.commentTailArea textarea').on('focus input', function(e){
+	var t = this, val = $(t).val().trim()
+	
+	showTail($(t).attr('name'))
 })
-$('.commentTailArea textarea').on('input', function(e){
-	var t = e.currentTarget, val = $(t).val().trim()
-	if($(t).attr('name') == 'html'){
-		$('.tail-preview').html(val)
-	}else{
-		var content = $('.commentTailArea textarea[name=content]').val().trim() || BGPage.commentTailDefaulContent,
-		bgcolor = $('.commentTailArea textarea[name=bgcolor]').val().trim() || BGPage.commentTailDefaulBgcolor
-		$('.tail-preview').html(BGPage.commentTailDefaulTpl.replace('{content}', content).replace('{bgcolor}', bgcolor))
-	}
-})
-$('.commentTailType').on('click', (e)=>{
-	var t = e.currentTarget
-	showTail($(t).hasClass('t1') ? 1 : 2)
-})
-showTail(BGPage.commentTailSetting.type == 1 ? 1 : 2)
+$('[name=blockUser]').on('blur', function(e){
+	var t = $(this), val = t.val().trim(), bus = []
 
-$('.tail-preview').html(BGPage.commentTailSetting.current.html||BGPage.commentTailSetting.default.html)
-$('.commentTailType.t'+BGPage.commentTailSetting.type).prop('checked', true)
+	if(val == '') return
+	var ps = val.split(/community\/personal\/([^\/\?]+)/) || []
+	var openid = ps[1] || (val.length > 0 && val.length < 64 ? val : '')
+	if(openid){
+		var chk = $('.blockOnes').find('[data-openid="'+openid+'"]')
+		if(chk.length) {
+			t.val('')
+			alert('该用户已存在屏蔽列表')
+			return
+		}
+		$.get('https://developers.weixin.qq.com/community/ngi/personal/'+openid+'?random='+Math.random(), function(res){
+			res.data && res.data.userInfo && res.data.userInfo.openid && (
+				blockUsers[res.data.userInfo.openid] = res.data.userInfo.nickname,
+				$('.blockOnes').append('<span class="block-one"><a title="访问其主页" href="https://developers.weixin.qq.com/community/personal/'+res.data.userInfo.openid+'" target="_blank">'+res.data.userInfo.nickname+'</a><span class="del" title="取消屏蔽" data-openid="'+res.data.userInfo.openid+'">x</span></span>')
+			)
+			t.val('')
+		}, 'json')
+	}else{
+		t.val('')
+		alert('填写其主页链接或openid')
+	}
+})
+$('.blockOnes').on('click', '.block-one .del', function(e){
+	if(id = $(e.currentTarget).data('openid') || false){
+		$(e.currentTarget).parent().remove()
+		console.log(blockUsers)
+		delete blockUsers[id]
+		console.log(blockUsers)
+	}
+})
+
+$('.submit.btn_primary').on('click', function(e){
+	var t = $(this)
+	saveTail()
+	BGPage.saveBlockUsers(blockUsers)
+	t.html('保存成功')
+	setTimeout(()=>{
+		window.location.reload()
+	}, 1500)
+	console.log(blockUsers)
+})
+showTail()
 
 
 

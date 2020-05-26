@@ -2,7 +2,7 @@
  * @author 有脾气的酸奶
  * @date 2020-1-3 16:58:47
 */
-var baseInfo = {}, currentCommentContent = '', currentTailSet = ''
+var baseInfo = {}, pageDataInfo = {}, blockUsers = {}, postType = 'answer', isReply = false, currentCommentContent = '', currentTailSet = {answer:'', reply: '', discuss:''}
 var tips = function(msg, type, time){
     type = typeof type == 'undefined' ? 1 : type
     $('#wx-alert').remove()
@@ -260,7 +260,8 @@ var tips = function(msg, type, time){
 }
 
 ;(function(window, document, $) {
-    var pluginCode = '<textarea id="plugin-clipboard" style="position:fixed;left:99999px;"></textarea>'+
+    var pluginCode = '<style id="plugin-style">.plg-hide{display:none !important;}</style>'+
+    '<textarea id="plugin-clipboard" style="position:fixed;left:99999px;"></textarea>'+
     '<script id="plugin-script">'+
     'window.tips = function(msg, type, time){'+
     '    type = typeof type == \'undefined\' ? 1 : type;'+
@@ -278,6 +279,11 @@ var tips = function(msg, type, time){
     'function getBaseInfo(o) { '+
     '    intervalFunction();'+
     '    window.postMessage({ cmd:"afterGetBaseInfo", data: typeof __INITIAL_STATE__ == "undefined"?{}:{__INITIAL_STATE__}}, "https://developers.weixin.qq.com");'+
+    '    document.body.removeChild(o);'+
+    '};'+
+    'function doBlockUser(o, users) { '+
+    '    var isCommentBlock = /community\\/develop\\/doc/.test(location.href) ? true : false;'+
+    '    window.postMessage({ cmd:"doBlockUser", isCommentBlock, blockUsers:users||{}, data: typeof __INITIAL_STATE__ == "undefined"?{}:{__INITIAL_STATE__}}, "https://developers.weixin.qq.com");'+
     '    document.body.removeChild(o);'+
     '};'+
     'window.targetAppEditor = false;'+
@@ -736,15 +742,16 @@ var tips = function(msg, type, time){
 
         if($(originElt).parent().hasClass('tail-op-bar') && e.button == 0){
             if($(originElt).hasClass('add')){
-                $(originElt).parents(".comment_editor_box").find(".tool_bar .preview-tail").html(currentTailSet);
+                $(originElt).parents(".comment_editor_box").find(".tool_bar .preview-tail").html(currentTailSet[postType]);
             }else if($(originElt).hasClass('del')){
                 $(originElt).parents(".comment_editor_box").find(".tool_bar .preview-tail").empty();
             }
         }else if($(originElt).hasClass('tail-op-a') && e.button == 0){
             var tmk = new Date().valueOf()
             $(originElt).attr('tarmark', tmk)
+            console.log(currentTailSet)
             if($(originElt).hasClass('add')){
-                $(originElt).parents(".comment_reply_body").siblings(".reply-preview-tail").html(currentTailSet);
+                $(originElt).parents(".comment_reply_body").siblings(".reply-preview-tail").html(currentTailSet['reply']);
                 window.postMessage({ cmd:"replyAddTail", mark: tmk}, "https://developers.weixin.qq.com");
             }else if($(originElt).hasClass('del')){
                 $(originElt).parents(".comment_reply_body").siblings(".reply-preview-tail").empty();
@@ -848,6 +855,8 @@ var tips = function(msg, type, time){
     window.addEventListener("message", function(event) {
         if(event.data.cmd == 'afterGetBaseInfo'){
             baseInfo = event.data.data.__INITIAL_STATE__ || {}
+            postType = baseInfo.doc && baseInfo.doc.Topic == 1 ? 'discuss' : 'answer'
+
             if(/community\/develop(\/(mixflow|article|question))?$/i.test(window.location.href)){
                 setTimeout(()=>{
                     new UScore().getScore()
@@ -855,8 +864,9 @@ var tips = function(msg, type, time){
             }
         }else if(event.data.cmd == 'commentContent'){
             currentCommentContent = event.data.content
+            isReply = event.data.type == 'reply' ? true : false
             console.log(currentCommentContent)
-            chrome.runtime.sendMessage({type:"hasTailMark", content:currentCommentContent}, function(res){
+            chrome.runtime.sendMessage({type:"hasTailMark", content:currentCommentContent, postType, isReply}, function(res){
                 console.log(res, event.data)
                 if($('#pre-post-comment-content').length > 0) $('#pre-post-comment-content').remove();
                 $('body').append('<div id="pre-post-comment-content" style="display:none;" data-type="'+event.data.type+'"></div>');
@@ -865,14 +875,93 @@ var tips = function(msg, type, time){
             });
         }else if(event.data.cmd == 'update'){
             console.log(event.data)
+        }else if(event.data.cmd == 'doBlockUser'){
+            pageDataInfo = event.data.data.__INITIAL_STATE__ || {}
+            blockUsers = event.data.blockUsers || blockUsers
+            console.log('blockUsers', event.data.blockUsers)
+            if(!event.data.isCommentBlock){
+                // 全部标签
+                var allRows = pageDataInfo.mixflowList ? (pageDataInfo.mixflowList.rows.length ? pageDataInfo.mixflowList.rows : []) : [],
+                // 文章标签
+                artRow = pageDataInfo.articleList ? (pageDataInfo.articleList.rows.length ? pageDataInfo.articleList.rows : []) : [],
+                // 问答标签
+                quesRows = pageDataInfo.develop ? (pageDataInfo.develop.hasOwnProperty(1) && pageDataInfo.develop[1].rows.length ? pageDataInfo.develop[1].rows : []) : [],
+                hideOrshow = function(row){
+                    var tar = $('li[data-doc-id="'+row.DocId+'"]'), _tar = false
+                    if(tar.length == 1 && row.OpenId in blockUsers && tar.attr('force-show') != 1){
+                        _tar = tar.clone()
+                        _tar.children().addClass('plg-hide')
+                        _tar.data('doc-id', '_'+row.DocId).find('>h2').removeClass('plg-hide').html('<a href="javascript:;" style="color: rgb(234, 160, 0);">该条已被你屏蔽(点击查看)</a>').parent()
+                        .attr('title', blockUsers[row.OpenId]).on('click', function(e){
+                            $(this).remove()
+                            $('li[data-doc-id="'+row.DocId+'"]').attr('force-show', 1).removeClass('plg-hide')
+                        })
+
+                        tar.addClass('plg-hide')
+                        tar.before(_tar)
+                    }else{
+                        tar.length == 1 && !(row.OpenId in blockUsers) && tar.hasClass('plg-hide') && tar.removeClass('plg-hide')
+                    }
+                    
+                },
+                rows = allRows
+                for (var i in rows) hideOrshow(rows[i])
+                rows = artRow
+                for (var i in rows) hideOrshow(rows[i])
+                rows = quesRows
+                for (var i in rows) hideOrshow(rows[i])
+            }else{
+                // 评论列表
+                var commentRows = pageDataInfo.doc && pageDataInfo.doc.Comments ? (pageDataInfo.doc.Comments.rows.length ? pageDataInfo.doc.Comments.rows : []) : [],
+                hideOrshow = function(row){
+                    var tar = $('li[id="'+row.CommentId+'"]'), _tar = false
+                    if(tar.length == 1 && row.OpenId in blockUsers && tar.attr('force-show') != 1){
+                        _tar = tar.clone()
+                        _tar.children().addClass('plg-hide')
+                        _tar.data('doc-id', '_'+row.DocId).find('>h2').removeClass('plg-hide').html('<a href="javascript:;" style="color: rgb(234, 160, 0);">该条已被你屏蔽(点击查看)</a>').parent()
+                        .attr('title', blockUsers[row.OpenId]).on('click', function(e){
+                            $(this).remove()
+                            $('li[data-doc-id="'+row.DocId+'"]').attr('force-show', 1).removeClass('plg-hide')
+                        })
+
+                        tar.addClass('plg-hide')
+                        tar.before(_tar)
+                    }else{
+                        tar.length == 1 && !(row.OpenId in blockUsers) && tar.hasClass('plg-hide') && tar.removeClass('plg-hide')
+                    }
+                    
+                }
+                console.log('commentRows', commentRows)
+                for (var i in commentRows) {
+                    if(commentRows[i].OpenId in blockUsers){
+                        $('li[id="'+commentRows[i].CommentId+'"]').css({display:'none'})
+                    }else{
+                        var subCommentRows = commentRows[i].Sub && commentRows[i].Sub.length ? commentRows[i].Sub : []
+                        console.log('subCommentRows', subCommentRows)
+                        for (var i in subCommentRows) {
+                            console.log(subCommentRows[i].OpenId,' in ', blockUsers, subCommentRows[i].OpenId in blockUsers)
+                            subCommentRows[i].OpenId in blockUsers && $('li[id="'+subCommentRows[i].CommentId+'"]').css({display:'none'})
+                        }
+                    }
+                }
+            }
+
+
         }
         
     })
 
 })(window, window.document, jQuery);
 
+chrome.runtime.onMessage.addListener(function(message, sender, sendResponse)
+{
+    if(message.type == 'doBlockUsers'){
+        blockUsers = message.users || {}
+    }
+});
 
 chrome.extension.onRequest.addListener(async function(message, sender, sendResponse) {
+        console.log(' message.users ', message.users )
     if(message.type == 'getUserScore'){
         if(!message.openid) return
         var user = await getUserInfo(message.openid)

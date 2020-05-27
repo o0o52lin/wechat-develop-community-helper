@@ -890,6 +890,8 @@ var tips = function(msg, type, time){
                     var tar = $('li[data-doc-id="'+row.DocId+'"]'), blockOneCls = 'block-user-item-'+row.DocId, _tar = false
                     if(!tar.length) return
                     if(row.OpenId in blockUsers && tar.attr('force-show') != 1){
+                        if(tar.attr('blocked') == 1 || tar.hasClass(blockOneCls)) return
+
                         _tar = tar.clone()
                         _tar.children().addClass('plg-hide')
                         _tar.addClass(blockOneCls).find('>h2').removeClass('plg-hide').html('<a href="javascript:;" style="color: rgb(234, 160, 0);">该条已被你屏蔽(点击查看)</a>').parent()
@@ -898,8 +900,8 @@ var tips = function(msg, type, time){
                             $('li[data-doc-id="'+row.DocId+'"]').attr('force-show', 1).removeClass('plg-hide')
                         })
 
-                        tar.addClass('plg-hide')
-                        tar.before(_tar)
+                        tar.attr('blocked', 1).addClass('plg-hide').before(_tar)
+
                     }else{
                         !(row.OpenId in blockUsers) && (tar.hasClass('plg-hide') && tar.removeClass('plg-hide'), $('.'+blockOneCls).remove())
                     }
@@ -917,8 +919,10 @@ var tips = function(msg, type, time){
                 hideOrshow = function(row){
                     var tar = $('li[id="'+row.CommentId+'"]')
                     if(!tar.length) return
-                    if(row.OpenId in blockUsers && tar.attr('force-show') != 1){
-                        tar.addClass('plg-hide')
+                    if(row.OpenId in blockUsers){
+                        if(tar.attr('blocked') == 1) return
+
+                        tar.attr('blocked', 1).addClass('plg-hide')
                     }else{
                         !(row.OpenId in blockUsers) && tar.hasClass('plg-hide') && tar.removeClass('plg-hide')
                     }

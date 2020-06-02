@@ -169,26 +169,27 @@ window.onload = async function(){
 
     setTimeout(()=>{
         getBaseInfo()
-        baseInfo && baseInfo.doc && Object.defineProperty(baseInfo.doc, 'QuestionAnswered', {
-            configurable: true,
-            enumerable: true,
-            get(v){
-                return this._QuestionAnswered
-            },
-            set(v){
-                this._QuestionAnswered = v
-                if(v){
-                    var coms = $('.post_comment_list>li>a')
-                    for(var i = 0; i< coms.length; i++){
-                        if(coms[i].href.indexOf(baseUserInfo.openid) > 0){
-                            baseUserInfo.userAnswerEle = $(coms[i])
-                            window.takeoverClickModifyCommentOpt();
-                            break
-                        }
-                    }
-                } 
-            }
-        })
+        window.takeoverClickModifyCommentOpt();
+        // baseInfo && baseInfo.doc && Object.defineProperty(baseInfo.doc, 'QuestionAnswered', {
+        //     configurable: true,
+        //     enumerable: true,
+        //     get(v){
+        //         return this._QuestionAnswered
+        //     },
+        //     set(v){
+        //         this._QuestionAnswered = v
+        //         if(v){
+        //             var coms = $('.post_comment_list>li>a')
+        //             for(var i = 0; i< coms.length; i++){
+        //                 if(coms[i].href.indexOf(baseUserInfo.openid) > 0){
+        //                     baseUserInfo.userAnswerEle = $(coms[i])
+        //                     window.takeoverClickModifyCommentOpt();
+        //                     break
+        //                 }
+        //             }
+        //         } 
+        //     }
+        // })
     }, 600)
 
 
@@ -610,8 +611,6 @@ function stopBubbleDefault(e) {
     return false;
 };
 function getBaseInfo() {
-    postType = (baseInfo.doc && baseInfo.doc.Topic == 1) || /develop\/article\/doc/.test(window.location.href) ? 'discuss' : 'answer'
-
     if(/community\/develop(\/(mixflow|article|question))?/i.test(window.location.href)){
         setTimeout(()=>{
             new UScore().getScore()
@@ -936,6 +935,7 @@ window.takeoverCreateCommentOpt = (type)=>{
     tt.length && tt.removeClass("origin-post-btn").after(
         tt.clone().attr("title", "社区小助手插件已接管").removeClass("origin-post-btn").addClass("new-post-btn").css({display:"inline-block", background:"#eaa000"})
         .on("click", ()=>{
+            postType = (baseInfo.doc && baseInfo.doc.Topic == 1) || /develop\/article\/doc/.test(window.location.href) ? 'discuss' : 'answer'
             var content = window.targetAppEditor.getContent().trim();
             // window.postMsg({ cmd:"commentContent", type: "modify", postType, content: (content == "" ? "" : content+window.targetCommentTail)}, "https://developers.weixin.qq.com");
             weChat.sendMessage({
@@ -972,6 +972,7 @@ window.takeoverReplyCommentOpt = ()=>{
     tt.length && tt.removeClass("origin-reply-btn").after(
          tt.clone().attr("title", "社区小助手插件已接管").removeClass("origin-reply-btn").addClass("new-reply-btn").css({display:"inline-block", background:"#eaa000"})
          .on("click", ()=>{
+            postType = (baseInfo.doc && baseInfo.doc.Topic == 1) || /develop\/article\/doc/.test(window.location.href) ? 'discuss' : 'answer'
              var p = window.targetAppEditor.$parent, childs = p.$children||[], len = childs.length;
              if(!p.handleReply){
                  for(var i=(len > 0 ? len-1 : -1);i>=0;i--){
@@ -1325,6 +1326,7 @@ document.addEventListener('mousedown', function (e) {
 
     if($(originElt).parent().hasClass('tail-op-bar') && e.button == 0){
         if($(originElt).hasClass('add')){
+            postType = (baseInfo.doc && baseInfo.doc.Topic == 1) || /develop\/article\/doc/.test(window.location.href) ? 'discuss' : 'answer'
             $(originElt).parents(".comment_editor_box").find(".tool_bar .preview-tail").html(currentTailSet[postType]);
         }else if($(originElt).hasClass('del')){
             $(originElt).parents(".comment_editor_box").find(".tool_bar .preview-tail").empty();

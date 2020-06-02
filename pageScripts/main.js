@@ -32,31 +32,8 @@ let reInitSearchRows = async function(){
         blockItems[item.docid].nickname = docId2openId[item.docid] ? window.blockUsers[docId2openId[item.docid]] || '' : ''
 
         newData.push(item)
-    }else{
-      // var getArticle = (item, b)=>new Promise((rs, rj)=>{
-      //   $.ajax({
-      //     url:'https://developers.weixin.qq.com/community/ngi/'+(item.blog.blogCategory == '524288' ? 'article' : 'doc')+'/detail/'+item.docid,
-      //     type: 'get',
-      //     dataType:'JSON',
-      //     success:function(r){
-      //       if(r.data && r.data.OpenId in window.blockUsers){
-      //         blockItems[item.docid] = item
-      //         blockItems[item.docid].nickname = window.blockUsers[r.data.OpenId]
-      //       }
-      //       rs(item)
-      //     },
-      //     fail(r){
-      //       rj(r)
-      //     }
-      //   })
-      // })
-      // newData.push(await getArticle(item, blockItems))
     }
-
-    if(item.docid == '0006a0c21d4b009011b99ed885b400'){
-      console.plog(blockItems)
-    }
-    i + 1 < blogList.length && await loopOne(i+1, blogList, docId2openId, blockItems, newData)
+    if(i + 1 < blogList.length) await loopOne(i+1, blogList, docId2openId, blockItems, newData)
   }
   blogList.length ? await loopOne(0, blogList, docId2openId, blockItems, newData) : void 0
   if (!this.pageScriptEventDispatched) {

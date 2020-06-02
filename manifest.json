@@ -3,19 +3,29 @@
       "scripts": [
          "js/jquery.min.js",
          "background.js"
-      ]
+      ],
+      "persistent":true
    },
-   "browser_action": {
-      "default_icon": "19.png",
-      "default_popup": "popup.html",
-      "default_title": "zh_CN"
+   "page_action":
+   {
+      "default_icon": "48.png",
+      "default_title": "社区小助手",
+      "default_popup": "popup.html"
+   },
+   // 向地址栏注册一个关键字以提供搜索建议，只能设置一个关键字
+   "omnibox": { "keyword" : "go" },
+   // Chrome40以前的插件配置页写法
+   "options_page": "options.html",
+   "options_ui":
+   {
+      "page": "options.html"
    },
    "content_scripts": [ {
       "all_frames": true,
       "css": [ "content.css" ],
-      "js": [ "js/jquery.min.js", "content.js"],
-      "matches": [ "https://developers.weixin.qq.com/community/develop/*" ],
-      "run_at": "document_idle"
+      "js": [ "js/jquery.min.js", "js/md5.js","content.js"],
+      "matches": [ "https://developers.weixin.qq.com/community/develop/*", "https://developers.weixin.qq.com/community/search*" ],
+      "run_at": "document_start"
    } ],
    "description": "微信开发者社区小助手",
    "icons": {
@@ -23,10 +33,18 @@
       "16": "19.png",
       "48": "48.png"
    },
+   "web_accessible_resources": [
+      "pageScripts/main.js",
+      "js/jquery.min.js",
+      "js/md5.js",
+      "js/inject-plugin-code.js",
+      "css/inject-css.css",
+      "128.png"
+   ],
    "manifest_version": 2,
    "name": "微信开发者社区小助手",
-   "permissions": [ "tabs", "contextMenus", "storage", "activeTab", "*://developers.weixin.qq.com/*", "clipboardWrite", "webRequest", "webRequestBlocking" ],
+   "permissions": [ "declarativeContent", "notifications", "tabs", "contextMenus", "storage", "activeTab", "*://developers.weixin.qq.com/*", "clipboardWrite", "webRequest", "webRequestBlocking" ],
    "short_name": "社区小助手",
    "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
-   "version": "1.0.8"
+   "version": "1.0.9"
 }

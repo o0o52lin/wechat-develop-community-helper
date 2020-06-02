@@ -1,12 +1,107 @@
 
-;(function (window) {
+window.debugLog = false
+window.nextVersionNotifyTime = 0
+window.pluginManifest = chrome.runtime.getManifest()
+Object.defineProperty(console, 'plog', {
+    onfigurable: true,
+    enumerable: true,
+    writable: true,
+    value(...param){
+        window.debugLog && console.log.apply(console, param)
+    }
+})
+window.blogCategory = {
+	1: '[问题]',
+	2: '[公告]',
+	4: '[教程]',
+	8: '[已知问题]',
+	16: '[经验]',
+	64: '[开源]',
+	128: '[活动]',
+	256: '[QA]',
+	512: '[API]',
+	1024: '[教程]',
+	524288: '[文章]',
+	1048576: '[已知问题与需求反馈]'
+}
+window.blockUserArticles = {
+	docId2openId:{},
+	openId2docId:{}
+}
+
+window.syncBlockUsersArticleAllPages = 0
+window.syncBlockUsersArticlePageCount = 0
+window.isSaveBlockUsersArticle = false
+window.isSyncingBlockUsersArticle = false
+
+window.ports = {}
+// 监听长连接
+chrome.runtime.onConnect.addListener(function(port) {
+    port.onMessage.addListener(function(msg) {
+        console.plog('收到长连接消息：', msg);
+        if(port.name == 'content2bg') {
+        	for(var i in msg.initBgConnections){
+        		chrome.tabs.query({ currentWindow: true }, (function(i){
+        			return function(tabs){
+	        			var r1 = /https?:\/\/developers\.weixin\.qq\.com\/community\/develop\/(article|mixflow|question)/,
+						r2 = /https?:\/\/developers\.weixin\.qq\.com\/community\/develop\/doc\//,
+	        			r3 = /https?:\/\/developers\.weixin\.qq\.com\/community\/search/
+						for(var ii in tabs){
+							var tab = tabs[ii], tabid = tab.id
+							if(r1.test(tab.url) || r2.test(tab.url) || r3.test(tab.url)){
+        						if(window.ports.hasOwnProperty(i) && window.ports[i].hasOwnProperty(tabid)) {
+        							window.ports[i][tabid].postMessage({ name: 'tabid:'+tabid+' -> '+i+' inited already'});
+        							continue
+        						}
+								var connection = chrome.tabs.connect(tabid, {name: i})
+								
+					        	let _postMessage = connection.postMessage
+								Object.defineProperty(connection, 'postMessage', {
+								    configurable: true,
+								    enumerable: true,
+								    writable: true,
+								    value(...param){
+								        if(typeof param[1] == 'function'){
+								            this.onMessage.addListener(function(msg) {
+								                param[1].apply(this, [msg])
+								            })
+								        }
+								        return _postMessage.apply(this, [param[0]])
+								    }
+								})
+								connection.onDisconnect.addListener((function(i, tabid){
+									return function(p){
+										delete window.ports[i][tabid]
+									}
+								})(i, tabid))
+
+								connection.postMessage({ name: i, blockUsers: window.blockUsers, msg: 'tabid:'+tabid+' -> '+i+' inited'});
+								window.ports[i] = window.ports[i] ? window.ports[i] : {}
+								window.ports[i][tabid] = connection
+								
+							}
+						}
+					}
+				})(i))
+	        	
+        	}
+        	port.postMessage({ ok: true, msg: 'initConnection ok', nextVersionNotifyTime: window.nextVersionNotifyTime, debugLog: window.debugLog, blockUsers: window.blockUsers, blockUserArticles: window.blockUserArticles, filterSearch:window.filterSearch});
+        	// port.disconnect()
+        }else{
+        	port.postMessage({ ok: true, ...msg, filterSearch:window.filterSearch});
+        }
+
+    });
+});
+
+;(async function (window) {
 	window.blockUsers = {}
 	window.commonReplyListEnable = !0
 	window.commentTailSetting = {
 		default:{
-			answer: '<p class="post_comment_agreen__status" style="display: tail;text-align: left;border-top: 0.5px solid rgba(0,0,0,.06);padding-top: 5px;margin-top: 15px;" title="tail"><span class="selected"><span marked="1590395601000.4229" class="_marked_"><i class="icon_radio"></i>若认为该回答有用，给回答者点个[ <span style="background:none;color:#576b95"><i class="icon_post_opr icon_topic_unagree"></i>有用</span> ]，让答案帮助更多的人</span></span></p>',
-			reply: '<p class="post_comment_agreen__status" style="display: tail;text-align: left;border-top: 0.5px solid rgba(0,0,0,.06);padding-top: 5px;margin-top: 15px;" title="tail"><span class="selected"><span marked="1590395601000.4229" class="_marked_"><i class="icon_radio"></i>若认为该回答有用，给回答者点个[ <span style="background:none;color:rgba(0,0,0,.5)"><i class="icon_post_opr icon_agree"></i>赞</span> ]</span></span></p>',
-			discuss: '<p class="post_comment_agreen__status" style="display: tail;text-align: left;border-top: 0.5px solid rgba(0,0,0,.06);padding-top: 5px;margin-top: 15px;" title="tail"><span class="selected"><span marked="1590395601000.4229" class="_marked_"><i class="icon_radio"></i>点个[ <span style="background:none;color:#576b95"><i class="icon_post_opr icon_topic_unagree"></i>赞同</span> ]，英雄所见略同</span></span></p>'
+			answer: '<p class="post_comment_agreen__status" style="display: tail;text-align: left;border-top: 0.5px solid rgba(0,0,0,.06);padding-top: 5px;margin-top: 15px;" title="tail"><span class="selected"><i class="icon_radio"></i>若认为该回答有用，给回答者点个[ <span style="background:none;color:#576b95"><i class="icon_post_opr icon_topic_unagree"></i>有用</span> ]，让答案帮助更多的人</span></p>',
+			reply: '<p class="post_comment_agreen__status" style="display: tail;text-align: left;border-top: 0.5px solid rgba(0,0,0,.06);padding-top: 5px;margin-top: 15px;" title="tail"><span class="selected"><i class="icon_radio"></i>若认为该回答有用，给回答者点个[ <span style="background:none;color:rgba(0,0,0,.5)"><i class="icon_post_opr icon_agree"></i>赞</span> ]</span></p>',
+			discuss: '<p class="post_comment_agreen__status" style="display: tail;text-align: left;border-top: 0.5px solid rgba(0,0,0,.06);padding-top: 5px;margin-top: 15px;" title="tail"><span class="selected"><i class="icon_radio"></i>点个[ <span style="background:none;color:#576b95"><i class="icon_post_opr icon_topic_unagree"></i>赞同</span> ]，英雄所见略同</span></p>'
 		},
 		current:{
 			answer: '',
@@ -16,7 +111,7 @@
 	}
 
 	window.codeTipSetting = {
-		default: "你好，请提供能复现问题的简单代码片段\r\nhttps://developers.weixin.qq.com/miniprogram/dev/devtools/minicode.html",
+		default: "弄一个 [ 能复现问题的简单的 ] 代码片段，我帮你看看\r\nhttps://developers.weixin.qq.com/miniprogram/dev/devtools/minicode.html",
 		current: ''
 	}
 
@@ -26,6 +121,14 @@
 		window[autoSearch_key] = autoSearch;
 		chrome.storage.local.set(data);
 		chrome.contextMenus.update(menus.aSearchMid(), {checked:Boolean(autoSearch)});
+	}
+
+	window.updateFilterSearch = function updateFilterSearch(filterSearch){
+		var data = {};
+		data[filterSearch_key] = filterSearch;
+		window[filterSearch_key] = filterSearch;
+		chrome.storage.local.set(data);
+		chrome.contextMenus.update(menus.filterSearchMid(), {checked:Boolean(filterSearch)});
 	}
 
 	window.updateCommonReplyListState = function updateCommonReplyListState(s){
@@ -64,50 +167,158 @@
 		return window.commentTailSetting.current
 	}
 	window.getBlockUsers = async function(){
-		var blockUsers = new Promise((rs, rj)=>{
+		var blockUsers = ()=>new Promise((rs, rj)=>{
 			chrome.storage.local.get('blockUsers', function (ret) {
 				rs(ret.blockUsers||{})
 			})
 		})
-		window.blockUsers = await blockUsers
+		window.blockUsers = await blockUsers()
 		return window.blockUsers
 	}
+	await window.getBlockUsers()
+
 	window.saveBlockUsers = async function(d){
-		chrome.storage.local.set({ blockUsers: d||{} })
-			console.log(d)
-		window.getBlockUsers().then(res=>{
-			console.log(res)
-			chrome.tabs.query({ currentWindow: true },function(tabs){
-				for(var i in tabs){
-					var r1 = /https?:\/\/developers\.weixin\.qq\.com\/community\/develop\/(article|mixflow|question)/,
-					r2 = /https?:\/\/developers\.weixin\.qq\.com\/community\/develop\/doc\//
-					if(r1.test(tabs[i].url) || r2.test(tabs[i].url)){
-						chrome.tabs.sendMessage(tabs[i].id, { tabid: tabs[i].id, type: 'doBlockUsers', users: window.blockUsers })
-						setTimeout((function(tid){
-							return function(){
-								var js = `if(typeof $ == 'function'){
-									$('body').append('<img src="https://res.wx.qq.com/a/wx_fed/assets/res/NTI4MWU5.ico" onload=\\'doBlockUser(this, `+JSON.stringify(res)+`)\\' style="position:fixed;left:88888px;" />');
-								}else{
-									setTimeout(function(){
-										typeof $ == 'function' && $('body').append('<img src="https://res.wx.qq.com/a/wx_fed/assets/res/NTI4MWU5.ico" onload=\\'doBlockUser(this, `+JSON.stringify(res)+`)\\' style="position:fixed;left:88888px;" />');
-									}, 800)
-								};`
-								chrome.tabs.executeScript(
-									tid,
-									{code:js},
-									function(){
-										console.log('batch exec doBlockUser')
-									}
-								);
-							}
-						})(tabs[i].id), 200)
-					}
-				}
+		window.blockUsers = d || {}
+		chrome.storage.local.set({ blockUsers: window.blockUsers })
+		
+		for(var i in window.ports['blockUser']){
+			window.ports['blockUser'][i].postMessage({ name: 'blockUser', blockUsers: window.blockUsers})
+		}
+
+		window.syncBlockUsersArticle()
+	}
+	window.getBlockUsersArticle = async function(){
+		var article = ()=>new Promise((rs, rj)=>{
+			chrome.storage.local.get('blockUsersArticle', function (ret) {
+				rs(ret.blockUsersArticle||{ docId2openId:{}, openId2docId:{} })
 			})
 		})
+		window.blockUserArticles = await article()
+		return window.blockUserArticles
+	}
+	await window.getBlockUsersArticle()
+
+	window.checkBlockUsersArticle = async function(d){
+		var res = await window.getBlockUsers()
+
+		var check = ()=>new Promise((rs, rj)=>{
+			if(!res || JSON.stringify(res) == '{}'){
+				window.blockUsers = {}
+				return rs({
+					docId2openId:{},
+					openId2docId:{}
+				})
+				
+			}
+			var arts = { docId2openId:{}, openId2docId:{} },
+			{docId2openId, openId2docId} = d
+			for(var i in res){
+				for(var h in docId2openId){
+					if(docId2openId[h] == i){
+						arts.docId2openId[h] = i
+					}
+				}
+				for(var g in openId2docId){
+					if(g == i){
+						arts.openId2docId[g] = openId2docId[g]
+					}
+				}
+			}
+			rs(arts)
+		})
+
+		return await check()
+	}
+	window.saveBlockUsersArticle = async function (d){
+		var data = {};
+		d = await window.checkBlockUsersArticle(d)
+
+		data['blockUsersArticle'] = d || {};
+		window.blockUserArticles = d || {}
+		chrome.storage.local.set(data);
+		window.isSaveBlockUsersArticle = false
+		window.syncBlockUsersArticlePageCount = 0
+		window.syncBlockUsersArticleAllPages = 0
+	}
+
+	window.oneSyncBlockUsersArticle = function(i, openids, morePageOpenids = []){
+		// console.plog(i, openids)
+		var openid = openids[i].openid, page = openids[i].page
+		$.ajax({
+          url:'https://developers.weixin.qq.com/community/ngi/personal/'+openid+'/article?page='+page,
+          type: 'get',
+          dataType:'JSON',
+          success:function(r){
+            if(r.success){
+				r.data.list.length > 0 && window.syncBlockUsersArticlePageCount++
+            	window.blockUserArticles.openId2docId[openid] = window.blockUserArticles.openId2docId.hasOwnProperty(openid) ? window.blockUserArticles.openId2docId[openid] : {}
+            	for(var k in r.data.list){
+            		window.blockUserArticles.docId2openId[r.data.list[k].DocId] = openid
+					window.blockUserArticles.openId2docId[openid][r.data.list[k].DocId] = 1
+            	}
+            	var maxPage = Math.ceil(r.data.total / 10),
+            	npage = r.data.page + 1 > maxPage ? 0 : r.data.page + 1
+            	openids[i].npage = npage
+            	openids[i].pages = maxPage
+        		npage > 0 && morePageOpenids.push({openid, page: npage, pages: maxPage})
+				maxPage && (window.syncBlockUsersArticleAllPages += maxPage)
+        		i + 1 < openids.length ? window.oneSyncBlockUsersArticle(i + 1, openids, morePageOpenids) : window.oneSyncBlockUsersArticleOfMorePageOpenids(0, morePageOpenids)
+            }
+          }
+        })
+	}
+	window.oneSyncBlockUsersArticleOfMorePageOpenids = async function(i, openids){
+		// console.plog('oneSyncBlockUsersArticleOfMorePageOpenids', i, openids)
+		if(!openids.length){
+			return await window.saveBlockUsersArticle(window.blockUserArticles)
+		}
+		var openid = openids[i].openid, page = openids[i].page
+		$.ajax({
+          url:'https://developers.weixin.qq.com/community/ngi/personal/'+openid+'/article?page='+page,
+          type: 'get',
+          dataType:'JSON',
+          success:async function(r){
+            if(r.success){
+				r.data.list.length > 0 && window.syncBlockUsersArticlePageCount++
+            	window.blockUserArticles.openId2docId[openid] = window.blockUserArticles.openId2docId.hasOwnProperty(openid) ? window.blockUserArticles.openId2docId[openid] : {}
+            	for(var k in r.data.list){
+            		window.blockUserArticles.docId2openId[r.data.list[k].DocId] = openid
+					window.blockUserArticles.openId2docId[openid][r.data.list[k].DocId] = 1
+            	}
+            	var maxPage = Math.ceil(r.data.total / 10),
+            	npage = r.data.page + 1 > maxPage ? 0 : r.data.page + 1
+
+            	if(npage > 0){
+	            	openids[i].npage = npage
+	            	openids[i].page = npage
+	            	openids[i].pages = maxPage
+            		window.oneSyncBlockUsersArticleOfMorePageOpenids(i, openids)
+            	}else if(i + 1 < openids.length){
+            		window.oneSyncBlockUsersArticleOfMorePageOpenids(i + 1, openids)
+            	}else{
+					// console.plog(window.syncBlockUsersArticlePageCount, window.syncBlockUsersArticleAllPages)
+					if(!window.isSaveBlockUsersArticle && window.syncBlockUsersArticleAllPages > 0 && window.syncBlockUsersArticlePageCount >= window.syncBlockUsersArticleAllPages){
+						// console.plog('saveBlockUsersArticle')
+						window.isSaveBlockUsersArticle = true
+						await window.saveBlockUsersArticle(window.blockUserArticles)
+					}
+					window.isSyncingBlockUsersArticle = false
+            	}
+            }
+          }
+        })
+	}
+
+	window.syncBlockUsersArticle = function(t){
+		var ps = [], tar = window.blockUsers, openids = [], morePageOpenids = []
+		for(var i in tar){
+			openids.push({openid: i, page: 1, pages: 1})
+		}
+		openids.length ? (window.isSyncingBlockUsersArticle = true, window.oneSyncBlockUsersArticle(0, openids, morePageOpenids, true)) : window.saveBlockUsersArticle({})
 	}
 
 	var autoSearch_key = 'autoSearch';
+	var filterSearch_key = 'filterSearch'
 	var menus = {
 		baseMid: ()=>{
 			this.bmid = this.bmid ? this.bmid : chrome.contextMenus.create({"title": '微信社区小组手', "contexts": ["all"], "documentUrlPatterns": ['*://developers.weixin.qq.com/*']})
@@ -119,12 +330,18 @@
 			}, "documentUrlPatterns": ['*://developers.weixin.qq.com/*']})
 			return this.asmid
 		},
+		filterSearchMid: ()=>{
+			this.fsmid = this.fsmid ? this.fsmid : chrome.contextMenus.create({"parentId": menus.baseMid(), "title": '启用搜索屏蔽功能', "type":'checkbox',"contexts": ["all"], "onclick": (e, tab)=>{
+				updateFilterSearch(e.checked ? 1 : 0);
+			}, "documentUrlPatterns": ['*://developers.weixin.qq.com/*']})
+			return this.fsmid
+		},
 		getUserScoreMid: ()=>{
 			this.gusmid = this.gusmid ? this.gusmid : chrome.contextMenus.create({"parentId": menus.baseMid(), "title": '查询TA的积分', "contexts": ['link'], "onclick": (e)=>{
 				var openid = e.linkUrl.replace(/(.*)?community\/personal\/([a-zA-Z0-9_-]+)(.*)?/, '$2')
 				chrome.tabs.query({active:true}, function(tab) {
 					var message = {'type': 'getUserScore', openid:openid, tab:tab[0]};
-					console.log(tab,message)
+					console.plog(tab,message)
 					chrome.tabs.sendRequest(tab[0].id, message);
 				})
 			}, "documentUrlPatterns": ['*://developers.weixin.qq.com/*']})
@@ -134,7 +351,7 @@
 		codeTipMid: ()=>{
 			this.ctmid = this.ctmid ? this.ctmid : chrome.contextMenus.create({"parentId": menus.baseMid(), "title": '复制代码片段提示', "contexts": ['all'], "onclick": (e)=>{
 				chrome.tabs.query({active:true}, function(tab) {
-					var text = "你好，请提供能复现问题的简单代码片段\r\nhttps://developers.weixin.qq.com/miniprogram/dev/devtools/minicode.html"
+					var text = "弄一个 [ 能复现问题的简单的 ] 代码片段，我帮你看看\r\nhttps://developers.weixin.qq.com/miniprogram/dev/devtools/minicode.html"
 					chrome.tabs.sendRequest(tab[0].id, {type: 'copy', text, msg:'复制成功，粘贴即可', tab:tab[0]});
 				})
 			}, "documentUrlPatterns": ['*://developers.weixin.qq.com/*']})
@@ -195,12 +412,23 @@
 				case 'getAutoSearch':
 					sendResponse({autoSearch:window[autoSearch_key]})
 					break;
+				case 'getfilterSearch':
+					sendResponse({fiterSearch:window[filterSearch_key]})
+					break;
 			}
 		}
 	});
 
 	chrome.storage.local.get(autoSearch_key, function (ret) {
 		updateAutoSearch(ret.autoSearch)
+	})
+
+	chrome.storage.local.get('nextVersionNotifyTime', function (res) {
+		window.nextVersionNotifyTime = res.nextVersionNotifyTime || 0
+	})
+
+	chrome.storage.local.get(filterSearch_key, function (ret) {
+		updateFilterSearch(ret.filterSearch)
 	})
 	chrome.storage.local.get('commonReplyListEnable', function (res) {
 		window.commonReplyListEnable = res.commonReplyListEnable
@@ -243,7 +471,7 @@
 		}else if(requestBody.hasOwnProperty('raw')){
 			data = $.par2Json($.ab2str(requestBody.raw[0].bytes))
 		}else{
-			console.log('requestBody', requestBody)
+			console.plog('requestBody', requestBody)
 		}
 		return data
 	}
@@ -277,68 +505,142 @@
 		}
 		if(hasTailMark || hasOldTail){
 			content = removeTailMark(content)
-			postType = isReply == 'reply' ? 'reply' : postType
+			postType = isReply ? 'reply' : postType
 			var tails = getCurrentTail() || {answer:'', reply: '', discuss:''}
 			hasTailMark && (content += (tails[postType] || ''))
 			hasOldTail && (content = content.replace(/<p style="display:([^;]+)?;/, '<p style="display: tail;'));
 		}
-		console.log({content, hasTailMark, hasOldTail, tails,postType})
+		console.plog({content, hasTailMark, hasOldTail, tails,postType})
 		return {content, hasTailMark, hasOldTail}
 	}
 
-	chrome.runtime.onMessage.addListener(function(message, sender, sendResponse){
-		type = message.type || '';
-		if(type == 'hasTailMark'){
-			console.log(message)
-			sendResponse({result:getTailMarkContent(message.content, message.postType, message.isReply)})
-		}else if(type == 'getCurrentTail'){
-			sendResponse({tail:getCurrentTail()})
-		}
-
-	})
-
-	chrome.webRequest.onCompleted.addListener(
-		async function(details) {
-			if(!details) return
-			if(!(details.type in {xmlhttprequest:0, main_frame:0})) return
-
-			var r1 = /https?:\/\/developers\.weixin\.qq\.com\/community\/develop\/(article|mixflow|question)/,
-			r2 = /https?:\/\/developers\.weixin\.qq\.com\/community\/ngi\/(article|mixflow|question)\/list/,
-			r3 = /https?:\/\/developers\.weixin\.qq\.com\/community\/develop\/doc\//,
-			time = 900
-
-			if(r1.test(details.url) || r2.test(details.url) || r3.test(details.url)){
-				window.getBlockUsers().then(res=>{
-					chrome.tabs.query({active:true}, function(tab){
-						console.log("current tabid -> ", tab[0].id, 'blockUsers -> ', res);
-
-						r2.test(details.url) && (time = 300);
-
-						setTimeout(function(){
-							var js = `if(typeof $ == 'function'){
-								$('body').append('<img src="https://res.wx.qq.com/a/wx_fed/assets/res/NTI4MWU5.ico" onload=\\'doBlockUser(this, `+JSON.stringify(res)+`)\\' style="position:fixed;left:88888px;" />');
-							}else{
-								setTimeout(function(){
-									typeof $ == 'function' && $('body').append('<img src="https://res.wx.qq.com/a/wx_fed/assets/res/NTI4MWU5.ico" onload=\\'doBlockUser(this, `+JSON.stringify(res)+`)\\' style="position:fixed;left:88888px;" />');
-								}, 800)
-							};`
-							chrome.tabs.executeScript(
-								tab[0].id,
-								{code:js},
-								function(){
-									console.log('exec doBlockUser')
-								}
-							);
-						}, time+600)
-					});
-				})
-			}
-
-		},
-		{urls:[
-			"<all_urls>"
-		]},
-		['extraHeaders', 'responseHeaders'] 
-	);
-
 })(this);
+
+
+chrome.runtime.onInstalled.addListener(function(){
+	chrome.declarativeContent.onPageChanged.removeRules(undefined, function(){
+		chrome.declarativeContent.onPageChanged.addRules([
+			{
+				conditions: [
+					// 只有打开微信开发者社区才显示pageAction
+					new chrome.declarativeContent.PageStateMatcher({pageUrl: {urlContains: 'developers.weixin.qq.com'}})
+				],
+				actions: [new chrome.declarativeContent.ShowPageAction()]
+			}
+		]);
+	});
+});
+
+
+// omnibox 演示
+chrome.omnibox.onInputChanged.addListener((text, suggest) => {
+	console.plog('inputChanged: ' + text);
+	if(!text) return;
+	if(/view/.test(text)) {
+		suggest([
+			{content: '小程序 view', description: '你要找“小程序view”吗？'},
+			{content: '小程序 cover-view', description: '你要找“小程序cover-view”吗？'},
+		]);
+	}
+	else if(text == '微博') {
+		suggest([
+			{content: '新浪' + text, description: '新浪' + text},
+			{content: '腾讯' + text, description: '腾讯' + text},
+			{content: '搜狐' + text, description: '搜索' + text},
+		]);
+	}
+	else {
+		suggest([
+			{content: '百度搜索 ' + text, description: '百度搜索 ' + text},
+			{content: '谷歌搜索 ' + text, description: '谷歌搜索 ' + text},
+		]);
+	}
+});
+
+// 当用户接收关键字建议时触发
+chrome.omnibox.onInputEntered.addListener((text) => {
+	console.plog('inputEntered: ' + text);
+	if(!text) return;
+	var href = '';
+	if(text.endsWith('cover-view')) href = 'https://developers.weixin.qq.com/miniprogram/dev/component/cover-view.html';
+	else if(text.endsWith('view')) href = 'https://developers.weixin.qq.com/miniprogram/dev/component/view.html';
+	else if(text.startsWith('百度搜索')) href = 'https://www.baidu.com/s?ie=UTF-8&wd=' + text.replace('百度搜索 ', '');
+	else if(text.startsWith('谷歌搜索')) href = 'https://www.google.com.tw/search?q=' + text.replace('谷歌搜索 ', '');
+	else href = 'https://www.baidu.com/s?ie=UTF-8&wd=' + text;
+	openUrlCurrentTab(href);
+});
+// 获取当前选项卡ID
+function getCurrentTabId(callback)
+{
+	chrome.tabs.query({active: true, currentWindow: true}, function(tabs)
+	{
+		if(callback) callback(tabs.length ? tabs[0].id: null);
+	});
+}
+
+// 当前标签打开某个链接
+function openUrlCurrentTab(url)
+{
+	getCurrentTabId(tabId => {
+		chrome.tabs.update(tabId, {url: url});
+	})
+}
+
+window.notifyOps = {}
+chrome.notifications.onPermissionLevelChanged.addListener((r)=>{
+    console.plog(r)
+})
+chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex)=>{
+    console.plog(notificationId, window.notifyOps.buttons[buttonIndex])
+    if(window.notifyOps.buttons[buttonIndex].title == '查看详情'){
+    	chrome.tabs.query({ currentWindow: true },function(tabs){
+    		var tarTab = false
+			for(var i in tabs){
+				if(/community\/develop(\/(mixflow|article|question))?$/i.test(tabs[i].url)){
+					tarTab = tabs[i]
+					break;
+				}
+			}
+			tarTab == false ? chrome.tabs.create({
+	    		url:'https://developers.weixin.qq.com/community/develop/mixflow?f=#show-new-version-log'
+	    	}) : chrome.tabs.update(tarTab.id, {
+	    		active: true,
+	    		url:'https://developers.weixin.qq.com/community/develop/mixflow?f=#show-new-version-log'
+	    	})
+		})
+    	window.nextVersionNotifyTime = new Date().valueOf()+5*60*1000
+    	chrome.storage.local.set({ nextVersionNotifyTime: window.nextVersionNotifyTime })
+    }else if(window.notifyOps.buttons[buttonIndex].title == '今日不再提醒'){
+    	window.nextVersionNotifyTime = new Date(new Date(new Date().valueOf()+86400*1000).toJSON().replace(/T.*/, '')).valueOf()
+    	chrome.storage.local.set({ nextVersionNotifyTime: window.nextVersionNotifyTime })
+    }
+    chrome.notifications.clear(notificationId)
+})
+
+function notify(o){
+	o.iconUrl = o.iconUrl || chrome.runtime.getURL('128.png')
+	window.notifyOps = o
+	chrome.notifications.create(null, o);
+}
+
+chrome.runtime.onMessage.addListener(function(message, sender, sendResponse){
+		console.plog('message', message)
+	type = message.type || '';
+	if(type == 'hasTailMark'){
+		console.plog(message)
+		sendResponse({result:getTailMarkContent(message.content, message.postType, message.isReply)})
+	}else if(type == 'getCurrentTail'){
+		sendResponse({tail:getCurrentTail()})
+	}else if(type == 'notifications'){
+		notify(message.options)
+		sendResponse({})
+	}else if(type == 'getManifest'){
+		console.plog('getManifest', window.pluginManifest)
+		sendResponse(window.pluginManifest)
+	}else if(type == 'getAutoSearch'){
+		sendResponse({autoSearch:window['autoSearch']})
+	}else{
+		sendResponse({errmsg:'background.js : chrome.runtime.onMessage UNMATCH'})
+	}
+
+})

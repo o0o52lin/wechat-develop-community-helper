@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <title id="options-page-title">谷歌访问助手设置</title>
+    <title id="options-page-title">微信开发社区小助手设置</title>
     <style type="text/css">
         * {
             -webkit-box-sizing: border-box;
@@ -206,6 +206,13 @@
             height: 32px;
             line-height: 32px
         }
+        .api-interceptor{
+            transform: translateX(420px) !important
+        }
+
+        .show-iframe {
+            transform: translateX(0) !important
+        }
 
 
 
@@ -261,6 +268,27 @@
             </div>
         </div>
         <div class="form-group">
+            <label class="col-sm-2 control-label fw700">
+                搜索屏蔽:
+            </label>
+            <div class="col-sm-10">
+                <div class="checkbox">
+                    <label>
+                        <input id="filterSearch" type="checkbox"> 启用 <span style="font-size: 11px">(<b style="color:rgb(234, 160, 0)">在搜索结果页启用屏蔽功能</b>)</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+        <div class="form-group" style="margin-top: 20px;">
+            <label class="col-sm-2 control-label fw700">
+            </label>
+            <div class="form-group recoverDefaultTail">
+                <div class="col-sm-10">
+                    <label>
+                        <input class="recover" type="checkbox"> 恢复默认小尾巴 <span class="remember-save" style="display: none">( <span style="color:rgb(234, 160, 0)">记得保存哦</span> )</span>
+                    </label>
+                </div>
+            </div>
             <label class="col-sm-2 control-label fw700">
                 回答小尾巴:
             </label>
@@ -352,7 +380,6 @@
     <div class="footer">&copy; <span class="year"></span> <a class="plugin-name" target="_blank" href="https://github.com/o0o52lin/wechat-develop-community-helper"></a></div>
 
 </div>
-
     <script src="options.js"></script>
 </body>
 </html>

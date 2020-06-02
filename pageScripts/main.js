@@ -191,7 +191,7 @@ let ajax_interceptor_qoweifjqon = {
           if(ajax_interceptor_qoweifjqon.settings.ajaxInterceptor_switchOn && this.readyState < 3){
             if(/developers\.weixin\.qq\.com\/community\/ngi\/search/.test(this.responseURL)){
               $('#article_frame').find('.plugin-no-result-wrp').remove()
-              $('#article_frame .search_posts_area_body').addClass('plugin-search-hide').find('.search_posts_content').append('<div class="plugin-no-result-wrp"><p class="empty-box" title="社区小组手" style="color: rgb(234, 160, 0);display: flex;">'+loadingSvg+'正在玩命搜索中...</p></div>')
+              $('#article_frame .search_posts_area_body').addClass('plugin-search-hide').find('.search_posts_content').append('<div class="plugin-no-result-wrp"><p class="empty-box" title="社区小助手" style="color: rgb(234, 160, 0);display: flex;">'+loadingSvg+'正在玩命搜索中...</p></div>')
             }else if(/developers\.weixin\.qq\.com\/community\/ngi\/(mixflow|article|question)\/list/.test(this.responseURL)){
               /developers\.weixin\.qq\.com\/community\/ngi\/question\/list/.test(this.responseURL)
                 &&  $('.simple_container_body')
@@ -203,7 +203,7 @@ let ajax_interceptor_qoweifjqon = {
               $('.simple_container_body')
                 .addClass('plugin-search-hide')
                 .find('.simple_container_body_body')
-                .append('<div class="plugin-no-result-wrp"><p class="empty-box" title="社区小组手" style="text-algin: center; color: rgb(234, 160, 0);">'+loadingSvg+'正在玩命加载中...</p></div>')
+                .append('<div class="plugin-no-result-wrp"><p class="empty-box" title="社区小助手" style="text-algin: center; color: rgb(234, 160, 0);">'+loadingSvg+'正在玩命加载中...</p></div>')
             }
           }
           if (this.readyState == 4) {

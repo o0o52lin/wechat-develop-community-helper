@@ -566,7 +566,7 @@ var tips = function(msg, type, time){
                             type:"notifications",
                             options:{
                                 type: 'basic',
-                                title: '社区小组手有更新啦',
+                                title: '社区小助手有更新啦',
                                 message: '赶紧去升级，体验一下吧',
                                 buttons:[
                                     { title:'查看详情' },
@@ -641,7 +641,7 @@ function doBlockUser(users) {
                 if(tar.hasClass('plg-hide')) return
                 tar.addClass('plg-hide')
                 _tar = $(
-                    '<li class="post_item post_overview post_item_simple_qa '+blockOneCls+' plugin-block-user-item" title="来自社区小组手的提示，屏蔽用户:'+blockUsers[row.OpenId]+'">'+
+                    '<li class="post_item post_overview post_item_simple_qa '+blockOneCls+' plugin-block-user-item" title="来自社区小助手的提示，屏蔽用户:'+blockUsers[row.OpenId]+'">'+
                     '<a href="javascript:;" style="color: rgb(234, 160, 0);"><h2 class="post_title">该条已被你屏蔽(点击查看)</h2></a>'+
                     '<li>')
                 _tar.on('click', function(e){
@@ -678,7 +678,7 @@ function doBlockUser(users) {
 
                 tar.addClass('plg-hide')
                 if(!blockTip.length){
-                    $('.anwser__title').append('<span class="plugin-blockTip" title="来自社区小组手的提示">有些回答或回复已被你屏蔽，点此显示</span>').on('click', '.plugin-blockTip', function(e){
+                    $('.anwser__title').append('<span class="plugin-blockTip" title="来自社区小助手的提示">有些回答或回复已被你屏蔽，点此显示</span>').on('click', '.plugin-blockTip', function(e){
                         $('li.plg-hide').removeClass('plg-hide')
                         $(this).off('click').remove()
                     })
@@ -718,7 +718,7 @@ function doBlockUserFromBlockItems(blockItems) {
                 if(tar.hasClass('plg-hide')) return
                 tar.addClass('plg-hide')
                 _tar = $(
-                    '<li class="post_item post_overview post_item_simple_qa '+blockOneCls+' plugin-block-user-item" title="来自社区小组手的提示，屏蔽用户:'+blockUsers[row.OpenId]+'">'+
+                    '<li class="post_item post_overview post_item_simple_qa '+blockOneCls+' plugin-block-user-item" title="来自社区小助手的提示，屏蔽用户:'+blockUsers[row.OpenId]+'">'+
                     '<a href="javascript:;" style="color: rgb(234, 160, 0);"><h2 class="post_title">该条已被你屏蔽(点击查看)</h2></a>'+
                     '<li>')
                 _tar.on('click', function(e){
@@ -752,7 +752,7 @@ function doBlockUserFromBlockItems(blockItems) {
 
                 tar.addClass('plg-hide')
                 if(!blockTip.length){
-                    $('.anwser__title').append('<span class="plugin-blockTip" title="来自社区小组手的提示">有些回答或回复已被你屏蔽，点此显示</span>').on('click', '.plugin-blockTip', function(e){
+                    $('.anwser__title').append('<span class="plugin-blockTip" title="来自社区小助手的提示">有些回答或回复已被你屏蔽，点此显示</span>').on('click', '.plugin-blockTip', function(e){
                         $('li.plg-hide').removeClass('plg-hide')
                         $(this).off('click').remove()
                     })
@@ -779,7 +779,7 @@ function searchDoBlockUser(blockItmes) {
         docid && $(v).attr('docid', docid);
         if(items.hasOwnProperty(docid)){
             var _li = $(
-                '<li class="post_item post_overview" title="来自社区小组手，屏蔽用户: '+items[docid].nickname+'">'+
+                '<li class="post_item post_overview" title="来自社区小助手，屏蔽用户: '+items[docid].nickname+'">'+
                 '<a href="javascript:;" style="color: rgb(234, 160, 0);"><h2 class="post_title">该搜索结果已被你屏蔽(点击查看)</h2></a>'+
                 '<li>'
             ).on('click', function(e){
@@ -1202,7 +1202,7 @@ function TextObj () {
         el.setAttribute('class', 'pop-links__wrp');
         el.innerHTML = '<div class="pop-links__list"><div class="pop-links__item">'+
         '   <div class="wx-show-head no-border">'+
-        '       <span class="plugin-by">社区小组手</span>'+
+        '       <span class="plugin-by">社区小助手</span>'+
         '    </div>'+
         '   <div id="wx-reco-list" class="reco-list__wrp">'+
         '       <ul class="reco__list"></ul>'+

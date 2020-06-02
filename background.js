@@ -321,7 +321,7 @@ chrome.runtime.onConnect.addListener(function(port) {
 	var filterSearch_key = 'filterSearch'
 	var menus = {
 		baseMid: ()=>{
-			this.bmid = this.bmid ? this.bmid : chrome.contextMenus.create({"title": '微信社区小组手', "contexts": ["all"], "documentUrlPatterns": ['*://developers.weixin.qq.com/*']})
+			this.bmid = this.bmid ? this.bmid : chrome.contextMenus.create({"title": '微信社区小助手', "contexts": ["all"], "documentUrlPatterns": ['*://developers.weixin.qq.com/*']})
 			return this.bmid
 		},
 		aSearchMid: ()=>{

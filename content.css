@@ -494,14 +494,21 @@
     font-size: 10px;
     color: #bbb;
 }
-
-.plugin-no-result-wrp{
+.plugin-no-result-wrp-for-mixflow,.plugin-no-result-wrp{
     height: 200px;
     align-items: center;
     display: flex;
     justify-content: center;
 }
 
+.plugin-no-result-wrp-for-mixflow{
+    height: 50px;
+}
+
+.plugin-no-result-wrp-for-mixflow .empty-box,.plugin-no-result-wrp .empty-box{
+    display: flex;
+    color: rgb(234, 160, 0);
+}
 
 
 #search_article_list .plugin-search-li-hide,

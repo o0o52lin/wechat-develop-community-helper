@@ -774,21 +774,24 @@ function searchDoBlockUser(blockItmes) {
     var items = blockItmes || {},
     ul = $('#search_article_list'),
     lis = ul.find('li')
-    lis.each(function(i, v){
-        var a = $(v).find('a'), href = $(a).attr('href') || '', docid = href.substr(href.lastIndexOf('/')+1)
-        docid && $(v).attr('docid', docid);
-        if(items.hasOwnProperty(docid)){
-            var _li = $(
-                '<li class="post_item post_overview" title="来自社区小助手，屏蔽用户: '+items[docid].nickname+'">'+
-                '<a href="javascript:;" style="color: rgb(234, 160, 0);"><h2 class="post_title">该搜索结果已被你屏蔽(点击查看)</h2></a>'+
-                '<li>'
-            ).on('click', function(e){
-                    $(this).off('click').remove()
-                    ul.find('li[docid="'+docid+'"]').removeClass('plugin-search-li-hide')
-                })
-            $(v).addClass('plugin-search-li-hide').before(_li)
+    for(var docid in items){
+        for(var i=0;i<lis.length;i++){
+            var href = $(lis[i]).find('.post_title a').attr('href') || ''
+            if(href.indexOf(docid) > 0){
+                $(lis[i]).attr('docid', docid)
+                var _li = $(
+                    '<li class="post_item post_overview" title="来自社区小助手，屏蔽用户: '+items[docid].nickname+'">'+
+                    '<a href="javascript:;" style="color: rgb(234, 160, 0);"><h2 class="post_title">该搜索结果已被你屏蔽(点击查看)</h2></a>'+
+                    '</li>'
+                ).on('click', function(e){
+                        $(this).off('click').remove()
+                        ul.find('li[docid="'+docid+'"]').removeClass('plugin-search-li-hide')
+                    })
+                $(lis[i]).addClass('plugin-search-li-hide').before(_li)
+                break;
+            }
         }
-    })
+    }
     $('.plugin-search-hide').removeClass('plugin-search-hide')
     $('.plugin-no-result-wrp').remove()
 };

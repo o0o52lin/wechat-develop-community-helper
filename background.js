@@ -241,72 +241,83 @@ chrome.runtime.onConnect.addListener(function(port) {
 		window.syncBlockUsersArticleAllPages = 0
 	}
 
-	window.oneSyncBlockUsersArticle = function(i, openids, morePageOpenids = []){
+	window.oneSyncBlockUsersArticle = async function(i, openids, type = 'article', morePageOpenids = []){
 		// console.plog(i, openids)
-		var openid = openids[i].openid, page = openids[i].page
-		$.ajax({
-          url:'https://developers.weixin.qq.com/community/ngi/personal/'+openid+'/article?page='+page,
-          type: 'get',
-          dataType:'JSON',
-          success:function(r){
-            if(r.success){
-				r.data.list.length > 0 && window.syncBlockUsersArticlePageCount++
-            	window.blockUserArticles.openId2docId[openid] = window.blockUserArticles.openId2docId.hasOwnProperty(openid) ? window.blockUserArticles.openId2docId[openid] : {}
-            	for(var k in r.data.list){
-            		window.blockUserArticles.docId2openId[r.data.list[k].DocId] = openid
-					window.blockUserArticles.openId2docId[openid][r.data.list[k].DocId] = 1
-            	}
-            	var maxPage = Math.ceil(r.data.total / 10),
-            	npage = r.data.page + 1 > maxPage ? 0 : r.data.page + 1
-            	openids[i].npage = npage
-            	openids[i].pages = maxPage
-        		npage > 0 && morePageOpenids.push({openid, page: npage, pages: maxPage})
-				maxPage && (window.syncBlockUsersArticleAllPages += maxPage)
-        		i + 1 < openids.length ? window.oneSyncBlockUsersArticle(i + 1, openids, morePageOpenids) : window.oneSyncBlockUsersArticleOfMorePageOpenids(0, morePageOpenids)
-            }
-          }
-        })
+		return new Promise((rs, rj)=>{
+			var openid = openids[i].openid, page = openids[i].page
+			$.ajax({
+	          url:'https://developers.weixin.qq.com/community/ngi/personal/'+openid+'/'+type+'?page='+page,
+	          type: 'get',
+	          dataType:'JSON',
+	          success: async function(r){
+	            if(r.success){
+					r.data.list.length > 0 && window.syncBlockUsersArticlePageCount++
+	            	window.blockUserArticles.openId2docId[openid] = window.blockUserArticles.openId2docId.hasOwnProperty(openid) ? window.blockUserArticles.openId2docId[openid] : {}
+	            	for(var k in r.data.list){
+	            		window.blockUserArticles.docId2openId[r.data.list[k].DocId] = openid
+						window.blockUserArticles.openId2docId[openid][r.data.list[k].DocId] = 1
+	            	}
+	            	var maxPage = Math.ceil(r.data.total / 10),
+	            	npage = r.data.page + 1 > maxPage ? 0 : r.data.page + 1
+	            	openids[i].npage = npage
+	            	openids[i].pages = maxPage
+	        		npage > 0 && morePageOpenids.push({openid, page: npage, pages: maxPage})
+					maxPage && (window.syncBlockUsersArticleAllPages += maxPage)
+	        		if(i + 1 < openids.length){
+	        			await window.oneSyncBlockUsersArticle(i + 1, openids, type, morePageOpenids)
+	        		}else{
+	        			await window.oneSyncBlockUsersArticleOfMorePageOpenids(0, morePageOpenids, type)
+	        		}
+	        		rs()
+	            }
+	          }
+	        })
+		})
+		
 	}
-	window.oneSyncBlockUsersArticleOfMorePageOpenids = async function(i, openids){
+	window.oneSyncBlockUsersArticleOfMorePageOpenids = async function(i, openids, type = 'article'){
 		// console.plog('oneSyncBlockUsersArticleOfMorePageOpenids', i, openids)
 		if(!openids.length){
-			return await window.saveBlockUsersArticle(window.blockUserArticles)
+			return window.saveBlockUsersArticle(window.blockUserArticles)
 		}
-		var openid = openids[i].openid, page = openids[i].page
-		$.ajax({
-          url:'https://developers.weixin.qq.com/community/ngi/personal/'+openid+'/article?page='+page,
-          type: 'get',
-          dataType:'JSON',
-          success:async function(r){
-            if(r.success){
-				r.data.list.length > 0 && window.syncBlockUsersArticlePageCount++
-            	window.blockUserArticles.openId2docId[openid] = window.blockUserArticles.openId2docId.hasOwnProperty(openid) ? window.blockUserArticles.openId2docId[openid] : {}
-            	for(var k in r.data.list){
-            		window.blockUserArticles.docId2openId[r.data.list[k].DocId] = openid
-					window.blockUserArticles.openId2docId[openid][r.data.list[k].DocId] = 1
-            	}
-            	var maxPage = Math.ceil(r.data.total / 10),
-            	npage = r.data.page + 1 > maxPage ? 0 : r.data.page + 1
+		return new Promise((rs, rj)=>{
+			var openid = openids[i].openid, page = openids[i].page
+			$.ajax({
+	          url:'https://developers.weixin.qq.com/community/ngi/personal/'+openid+'/'+type+'?page='+page,
+	          type: 'get',
+	          dataType:'JSON',
+	          success:async function(r){
+	            if(r.success){
+					r.data.list.length > 0 && window.syncBlockUsersArticlePageCount++
+	            	window.blockUserArticles.openId2docId[openid] = window.blockUserArticles.openId2docId.hasOwnProperty(openid) ? window.blockUserArticles.openId2docId[openid] : {}
+	            	for(var k in r.data.list){
+	            		window.blockUserArticles.docId2openId[r.data.list[k].DocId] = openid
+						window.blockUserArticles.openId2docId[openid][r.data.list[k].DocId] = 1
+	            	}
+	            	var maxPage = Math.ceil(r.data.total / 10),
+	            	npage = r.data.page + 1 > maxPage ? 0 : r.data.page + 1
 
-            	if(npage > 0){
-	            	openids[i].npage = npage
-	            	openids[i].page = npage
-	            	openids[i].pages = maxPage
-            		window.oneSyncBlockUsersArticleOfMorePageOpenids(i, openids)
-            	}else if(i + 1 < openids.length){
-            		window.oneSyncBlockUsersArticleOfMorePageOpenids(i + 1, openids)
-            	}else{
-					// console.plog(window.syncBlockUsersArticlePageCount, window.syncBlockUsersArticleAllPages)
-					if(!window.isSaveBlockUsersArticle && window.syncBlockUsersArticleAllPages > 0 && window.syncBlockUsersArticlePageCount >= window.syncBlockUsersArticleAllPages){
-						// console.plog('saveBlockUsersArticle')
-						window.isSaveBlockUsersArticle = true
-						await window.saveBlockUsersArticle(window.blockUserArticles)
-					}
-					window.isSyncingBlockUsersArticle = false
-            	}
-            }
-          }
-        })
+	            	if(npage > 0){
+		            	openids[i].npage = npage
+		            	openids[i].page = npage
+		            	openids[i].pages = maxPage
+	            		window.oneSyncBlockUsersArticleOfMorePageOpenids(i, openids, type)
+	            	}else if(i + 1 < openids.length){
+	            		window.oneSyncBlockUsersArticleOfMorePageOpenids(i + 1, openids, type)
+	            	}else{
+						// console.plog(window.syncBlockUsersArticlePageCount, window.syncBlockUsersArticleAllPages)
+						if(!window.isSaveBlockUsersArticle && window.syncBlockUsersArticleAllPages > 0 && window.syncBlockUsersArticlePageCount >= window.syncBlockUsersArticleAllPages){
+							// console.plog('saveBlockUsersArticle')
+							window.isSaveBlockUsersArticle = true
+							await window.saveBlockUsersArticle(window.blockUserArticles)
+						}
+						window.isSyncingBlockUsersArticle = false
+	            	}
+	            	rs()
+	            }
+	          }
+	        })
+		})
 	}
 
 	window.syncBlockUsersArticle = function(t){
@@ -314,7 +325,17 @@ chrome.runtime.onConnect.addListener(function(port) {
 		for(var i in tar){
 			openids.push({openid: i, page: 1, pages: 1})
 		}
-		openids.length ? (window.isSyncingBlockUsersArticle = true, window.oneSyncBlockUsersArticle(0, openids, morePageOpenids, true)) : window.saveBlockUsersArticle({})
+		if(openids.length){
+			if(!window.isSyncingBlockUsersArticle){
+				window.isSyncingBlockUsersArticle = true
+				window.oneSyncBlockUsersArticle(0, openids, 'article', morePageOpenids, true).then(res=>{
+					morePageOpenids = []
+					window.oneSyncBlockUsersArticle(0, openids, 'question', morePageOpenids, true)
+				})
+			}
+		}else{
+			window.saveBlockUsersArticle({})
+		}
 	}
 
 	var autoSearch_key = 'autoSearch';

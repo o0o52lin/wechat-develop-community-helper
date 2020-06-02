@@ -52,6 +52,10 @@ let reInitSearchRows = async function(){
       // })
       // newData.push(await getArticle(item, blockItems))
     }
+
+    if(item.docid == '0006a0c21d4b009011b99ed885b400'){
+      console.plog(blockItems)
+    }
     i + 1 < blogList.length && await loopOne(i+1, blogList, docId2openId, blockItems, newData)
   }
   blogList.length ? await loopOne(0, blogList, docId2openId, blockItems, newData) : void 0
@@ -148,7 +152,20 @@ reInitPageCommentData = async function(){
     this.pageScriptEventDispatched = true;
   }
   return blockItems
+},
+routeTypes = { mixflow: 'MixFlowBlogList', article: 'ArticleList', question: 'QuestionBlogList' },
+inRouteType = url=>{
+  var type = url.replace(/^.*\/ngi\/(mixflow|article|question)\/list.*$/, '$1')
+  
+  return type in routeTypes ? type : false
+},
+routeType = url=>{
+  var type = false
+  
+  return (type = inRouteType(url)) ? { type, path: routeTypes[type] } : {}
 }
+
+
 // 命名空间
 let ajax_interceptor_qoweifjqon = {
   settings: {
@@ -166,7 +183,7 @@ let ajax_interceptor_qoweifjqon = {
           if (switchOn) {
             if(/developers\.weixin\.qq\.com\/community\/ngi\/search\?/.test(t.responseURL)){
               !t.isReIniting && (t.isReIniting = true, await reInitSearchRows.apply(t), t.isReIniting = false)
-            }else if(/developers\.weixin\.qq\.com\/community\/ngi\/(mixflow|article|question)\/list/.test(t.responseURL)){
+            }else if(inRouteType(t.responseURL) !== false){
               // console.plog('mixflow/list')
               !t.isReIniting && (t.isReIniting = true, await reInitPageData.apply(t), t.isReIniting = false)
             }else if(/developers\.weixin\.qq\.com\/community\/ngi\/comment\/list/.test(t.responseURL)){
@@ -180,7 +197,7 @@ let ajax_interceptor_qoweifjqon = {
       // 3.5s后强制显示
       setTimeout(()=>{
         $('.plugin-search-hide').removeClass('plugin-search-hide')
-        $('.plugin-no-result-wrp').remove()
+        // $('.plugin-no-result-wrp').remove()
       }, 3500)
     }
     
@@ -188,22 +205,36 @@ let ajax_interceptor_qoweifjqon = {
     for (let attr in xhr) {
       if (attr === 'onreadystatechange') {
         xhr.onreadystatechange = async (...args) => {
-          if(ajax_interceptor_qoweifjqon.settings.ajaxInterceptor_switchOn && this.readyState < 3){
+          if(ajax_interceptor_qoweifjqon.settings.ajaxInterceptor_switchOn && this.readyState < 4 ){
+            this.route = routeType(this.responseURL)
             if(/developers\.weixin\.qq\.com\/community\/ngi\/search/.test(this.responseURL)){
               $('#article_frame').find('.plugin-no-result-wrp').remove()
               $('#article_frame .search_posts_area_body').addClass('plugin-search-hide').find('.search_posts_content').append('<div class="plugin-no-result-wrp"><p class="empty-box" title="社区小助手" style="color: rgb(234, 160, 0);display: flex;">'+loadingSvg+'正在玩命搜索中...</p></div>')
-            }else if(/developers\.weixin\.qq\.com\/community\/ngi\/(mixflow|article|question)\/list/.test(this.responseURL)){
-              /developers\.weixin\.qq\.com\/community\/ngi\/question\/list/.test(this.responseURL)
-                &&  $('.simple_container_body')
+            }else if(this.route.type){
+
+              this.route.type == 'question' &&  $('.simple_container[data-route-path='+this.route.path+'] .simple_container_body')
                   .addClass('plugin-search-hide')
                   .find('.simple_container_body_body>div')
                   .addClass('plugin-mod_article_list_container')
 
+
+                console.plog('this.readyState', this.readyState, this.route.type, $('.simple_container[data-route-path='+this.route.path+'] ul.post_list li').length, this.responseURL.indexOf('page=1&'))
+
+              var ismixflow_load = false
               $('.plugin-no-result-wrp').remove()
-              $('.simple_container_body')
-                .addClass('plugin-search-hide')
-                .find('.simple_container_body_body')
-                .append('<div class="plugin-no-result-wrp"><p class="empty-box" title="社区小助手" style="text-algin: center; color: rgb(234, 160, 0);">'+loadingSvg+'正在玩命加载中...</p></div>')
+              if(this.route.type == 'mixflow' && $('.simple_container[data-route-path='+this.route.path+'] ul.post_list li').length && $('.simple_container[data-route-path='+this.route.path+'] .simple_container_body').find('.list_loading').length){
+                  ismixflow_load = true
+                $('.simple_container[data-route-path='+this.route.path+'] .simple_container_body')
+                  .find('.list_loading')
+                  .html('<div class="plugin-no-result-wrp-for-mixflow"><p class="empty-box" title="社区小助手">'+loadingSvg+'正在玩命加载中...</p></div>')
+              }
+              if(!ismixflow_load || (this.responseURL.indexOf('page=1&') > 0 && this.route.type == 'mixflow')){
+                console.plog('plugin-no-result-wrp')
+                $('.simple_container[data-route-path='+this.route.path+'] .simple_container_body')
+                  .addClass('plugin-search-hide')
+                  .find('.simple_container_body_body')
+                  .append('<div class="plugin-no-result-wrp"><p class="empty-box" title="社区小助手00">'+loadingSvg+'正在玩命加载中...</p></div>')
+              }
             }
           }
           if (this.readyState == 4) {
@@ -211,6 +242,11 @@ let ajax_interceptor_qoweifjqon = {
             if (ajax_interceptor_qoweifjqon.settings.ajaxInterceptor_switchOn) {
               // 开启拦截
               await modifyResponse()
+              if(this.responseURL.indexOf('page=1&') > 0 && this.route.type == 'mixflow'){
+                $('.simple_container[data-route-path='+this.route.path+'] .simple_container_body')
+                  .find('.list_loading')
+                  .html('<div class="plugin-no-result-wrp-for-mixflow"><p class="empty-box" title="社区小助手">'+loadingSvg+'正在玩命加载中...</p></div>')
+              }
             }
           }
           this.onreadystatechange && this.onreadystatechange.apply(this, args);

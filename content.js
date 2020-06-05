@@ -8,38 +8,28 @@ window.blockUserArticles = {
     docId2openId:{},
     openId2docId:{}
 }
-
+var getStackTrace = function () {
+    let orig = Error.prepareStackTrace
+    Error.prepareStackTrace = function(_, stack){ return stack }
+    let err = new Error
+    Error.captureStackTrace(err, arguments.callee)
+    let stack = err.stack
+    Error.prepareStackTrace = orig
+    return stack
+}
 Object.defineProperty(console, 'plog', {
     onfigurable: true,
     enumerable: true,
     writable: true,
     value(...param){
+        var stack = getStackTrace()[1], file = stack ? stack.getFileName() : ''
+        var line = file ? "\r\n\r\n"+file+':'+stack.getLineNumber()+':'+stack.getPosition() : ''
+        line && param.push(line)
+
         window.debugLog && console.log.apply(console, param)
     }
 })
 
-
-mylog = (ct, tt, css)=>{
-    var e = ct.title ? ct.title : tt || '社区小助手'
-    , r = ct.content ? ct.content : ct
-    , c = "#1475b2"
-    , f = "#42c02e"
-    , l = function (t) {
-        var e = t.title
-          , r = typeof t.content == 'object' ? JSON.stringify(t.content) : t.content
-          , n = t.backgroundColor
-          , msg = "%c ".concat(e, " %c ").concat(r, " ")
-          , i = [
-                msg, 
-                "padding: 5px; border-radius: 3px 0 0 3px; color: #fff; background: ".concat("#606060", ";"), 
-                "padding: 5px; border-radius: 0 3px 3px 0; color: #fff; background: ".concat(n, ";")
-            ];
-        t.css && t.css.length && t.css.unshift(msg) && (i = t.css)
-        window.console && "function" === typeof window.console.plog && console.plog.apply(console, i)
-      };
-  l({ title: e, content: r, backgroundColor: f, css: ct.css || css || [] })
-}
-mylog('456', 'dfs')
 
 chrome.runtime.onConnect.addListener(function(port) {
     port.onMessage.addListener(function(msg) {
@@ -107,7 +97,7 @@ window.postMsg = (d , callback)=>{
     console.plog('callback:::::::::', callback)
 }
 window.weChat = {
-    _exist(name){
+    _exist(name, type){
         var t = weChat, e = true, tar = false, namePart = (name||'').split('.')
         for(var i in namePart){
             tar == false && (tar = window);
@@ -118,7 +108,12 @@ window.weChat = {
                 break;
             }
         }
-        return tar
+        if(type == 'function'){
+            t._prop = typeof tar == 'function' ? tar : false
+        }else{
+            t._prop = tar
+        }
+        return e
     },
     _typeof(para) {
         const type = typeof para;
@@ -156,8 +151,8 @@ window.weChat = {
                 callback = (_)=>{},
                 uuid = window.md5(JSON.stringify({ api, cmd, param }))
                 if(JSON.stringify(api) != '{}'){
-                    if(!method) return
-                    var _method = t._exist(method)
+                    if(!method || !t._exist(method, 'function')) return
+                    var _method = t._prop
                     hasCallback && (callback = (cbRes)=>{
                         var d = {}, tp = t._typeof(cbRes)
                         if(tp in { object:0, array:0 }){
@@ -240,6 +235,7 @@ weChat.onMessage.addListener('getCurrentTail', function(res){
 weChat.onMessage.addListener('commentContent')
 weChat.onMessage.addListener('getAutoSearch')
 weChat.onMessage.addListener('newVersionNotify')
+weChat.onMessage.addListener('viewMore')
 
 // chrome.runtime.sendMessage({type:"notifications", options:{
 //         type: 'basic',
@@ -391,6 +387,7 @@ weChat.onMessage.addListener('newVersionNotify')
 })(window, window.document, jQuery);
 
 chrome.extension.onRequest.addListener(async function(message, sender, sendResponse) {
+    console.plog(message)
     if(message.type == 'getUserScore'){
         if(!message.openid) return
         weChat.sendMessage({
@@ -425,6 +422,11 @@ mfJson.blockUsers = window.blockUsers
 manifest.innerText = 'window.chromeManifest = '+JSON.stringify(mfJson);
 document.documentElement.appendChild(manifest);
 
+const css = document.createElement('link');
+css.setAttribute('rel', 'stylesheet');
+css.setAttribute('href', chrome.extension.getURL('css/inject-css.css'));
+document.documentElement.appendChild(css);
+
 // const localdb = document.createElement('script');
 // localdb.setAttribute('type', 'text/javascript');
 // localdb.setAttribute('src', chrome.extension.getURL('js/localDB.min.js'));
@@ -452,7 +454,7 @@ script.addEventListener('load', () => {
     port.onMessage.addListener((msg)=>{
         console.plog(msg)
         chrome.storage.local.set({ajaxInterceptor_switchOn: msg.filterSearch})
-        postMessage({type: 'ajaxInterceptor', to: 'pageScript', key: 'ajaxInterceptor_switchOn', value: msg.filterSearch});
+        postMessage({type: 'ajaxInterceptor', to: 'pageScript', key: 'ajaxInterceptor_switchOn', value: msg.filterSearch, refresh: true});
     })
     port.postMessage({filterSearch:1})
 

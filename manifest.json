@@ -24,7 +24,7 @@
       "all_frames": true,
       "css": [ "content.css" ],
       "js": [ "js/jquery.min.js", "js/md5.js","content.js"],
-      "matches": [ "https://developers.weixin.qq.com/community/develop/*", "https://developers.weixin.qq.com/community/search*" ],
+      "matches": [ "https://developers.weixin.qq.com/community/develop/*", "https://developers.weixin.qq.com/community*", "https://developers.weixin.qq.com/community/search*" ],
       "run_at": "document_start"
    } ],
    "description": "微信开发者社区小助手",
@@ -46,5 +46,5 @@
    "permissions": [ "declarativeContent", "notifications", "tabs", "contextMenus", "storage", "activeTab", "*://developers.weixin.qq.com/*", "clipboardWrite", "webRequest", "webRequestBlocking" ],
    "short_name": "社区小助手",
    "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
-   "version": "1.1.2"
+   "version": "1.1.3"
 }

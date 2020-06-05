@@ -2,11 +2,25 @@
 window.debugLog = false
 window.nextVersionNotifyTime = 0
 window.pluginManifest = chrome.runtime.getManifest()
+
+var getStackTrace = function () {
+    let orig = Error.prepareStackTrace
+    Error.prepareStackTrace = function(_, stack){ return stack }
+    let err = new Error
+    Error.captureStackTrace(err, arguments.callee)
+    let stack = err.stack
+    Error.prepareStackTrace = orig
+    return stack
+}
 Object.defineProperty(console, 'plog', {
     onfigurable: true,
     enumerable: true,
     writable: true,
     value(...param){
+        var stack = getStackTrace()[1], file = stack ? stack.getFileName() : ''
+        var line = file ? "\r\n\r\n"+file+':'+stack.getLineNumber()+':'+stack.getPosition() : ''
+        line && param.push(line)
+
         window.debugLog && console.log.apply(console, param)
     }
 })

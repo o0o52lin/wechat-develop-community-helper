@@ -1,0 +1,29 @@
+#search_article_list .plugin-search-li-hide,
+.search_posts_area_body .no-result-wrp,
+.plugin-css-hide .mod_topicblock,
+.plugin-css-hide .post_list,
+.plugin-css-hide .pagination_wrp,
+.plugin-css-hide .plugin-mod_article_list_container,
+.plugin-css-hide .simple_container_body_header{
+    display: none;
+}
+
+.plugin-css-hide .simple_container .list_loading{
+	display: block;
+}
+
+.plugin-css-hide.ajax-loading .mod_topicblock,
+.plugin-css-hide.ajax-loading .post_list,
+.plugin-css-hide.ajax-loading .pagination_wrp,
+.plugin-css-hide.ajax-loading .plugin-mod_article_list_container,
+.plugin-css-hide.ajax-loading .simple_container_body_header{
+    display: block;
+}
+
+.simple_container .plugin-no-result-wrp,.search_list_body .plugin-no-result-wrp{
+    display: none;
+}
+
+.plugin-css-hide .simple_container .plugin-no-result-wrp,.plugin-css-hide .search_list_body .plugin-no-result-wrp{
+    display: flex;
+}

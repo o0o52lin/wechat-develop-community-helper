@@ -4,16 +4,31 @@ window.baseInfo = {}
 window.baseUserInfo = {}
 window.pageDataInfo = {}
 window.blockUsers = {}
+
+var getStackTrace = function () {
+    let orig = Error.prepareStackTrace
+    Error.prepareStackTrace = function(_, stack){ return stack }
+    let err = new Error
+    Error.captureStackTrace(err, arguments.callee)
+    let stack = err.stack
+    Error.prepareStackTrace = orig
+    return stack
+}
 Object.defineProperty(console, 'plog', {
     onfigurable: true,
     enumerable: true,
     writable: true,
     value(...param){
+        var stack = getStackTrace()[1], file = stack ? stack.getFileName() : ''
+        var line = file ? "\r\n\r\n"+file+':'+stack.getLineNumber()+':'+stack.getPosition() : ''
+        line && param.push(line)
+
         window.debugLog && console.log.apply(console, param)
     }
 })
+
 window.weChat = {
-    _exist(name){
+    _exist(name, type){
         var t = weChat, e = true, tar = false, namePart = (name||'').split('.')
         for(var i in namePart){
             tar == false && (tar = window);
@@ -24,7 +39,12 @@ window.weChat = {
                 break;
             }
         }
-        return tar
+        if(type == 'function'){
+            t._prop = typeof tar == 'function' ? tar : false
+        }else{
+            t._prop = tar
+        }
+        return e
     },
     _typeof(para) {
         const type = typeof para;
@@ -62,8 +82,8 @@ window.weChat = {
                 callback = (_)=>{}
                 uuid = uuid || window.md5(JSON.stringify({ api, cmd, param }))
                 if(JSON.stringify(api) != '{}'){
-                    if(!method) return
-                    var _method = t._exist(method)
+                    if(!method || !t._exist(method, 'function')) return
+                    var _method = t._prop
                     hasCallback && (callback = (cbRes)=>{
                         var d = {}, tp = t._typeof(cbRes)
                         if(tp in { object:0, array:0 }){
@@ -155,8 +175,7 @@ window.weChat = {
 let {onload} = window
 window.onload = async function(){
 
-    setTimeout(()=>{
-        $("body").delegate(".js_comment.best_comment_discuss,.js_comment.post_opr_meta_comment_reply,.mode__rich-text-editor .ql-editor,.post_comment_opr .post_opr_meta", "click", function(e){
+    setTimeout(()=>{        $("body").delegate(".js_comment.best_comment_discuss,.js_comment.post_opr_meta_comment_reply,.mode__rich-text-editor .ql-editor,.post_comment_opr .post_opr_meta", "click", function(e){
             var li = $(e.currentTarget).parents('li[itemprop="answer"]')
             if(li.find(".ql-toolbar .tail-op-bar").length && li.find(".new-post-btn").length){
                 return;
@@ -232,43 +251,7 @@ weChat.onMessage.addListener('showTargetUserScore', async function(msg, sendResp
 })
 
 
-
-
-window.postMsg = (d, callback)=>{
-    let { to = '', cmd = '', result = {}, website = 'https://developers.weixin.qq.com' } = d
-    cmd = cmd ? cmd : ''
-    d.to = to
-    d.cmd = cmd
-    d.result = result
-    d.from = 'inject_script'
-    var dd = JSON.parse(JSON.stringify(d))
-    var uuid = window.btoa(JSON.stringify(dd))
-    d.uuid = uuid
-    d.isCallback = callback ? !0 : !1
-    to && cmd && window.postMessage(d, website)
-
-    window.postMsgHandle = window.postMsgHandle ? window.postMsgHandle : {}
-    if(!window.postMsgHandle[uuid]){
-        window.postMsgHandle[uuid] = setInterval(()=>{
-            if(window[uuid]){
-                clearInterval(window.postMsgHandle[uuid])
-                delete window.postMsgHandle[uuid]
-                callback(window[uuid])
-                document.getElementById(uuid).remove()
-            }
-        }, 100)
-    }
-    
-    console.plog('callback:::::::::', callback)
-}
-var tips = function(msg, type, time){
-    type = typeof type == 'undefined' ? 1 : type
-    $('#wx-alert').remove()
-    $('body').append('<div id="wx-alert" class="weui-toptips '+(!type?'weui-toptips_error':'weui-toptips_success')+'" style="z-index: 10005;"><div class="weui-toptips__inner">'+msg+'</div></div>')
-    setTimeout(()=>{
-        $('#wx-alert').remove()
-    }, time||2e3)
-}, UScore = function (openid) {
+var UScore = function (openid) {
     this.token = baseInfo.token || getCookie('server_token') || '';
     this.openid = openid ? openid : (baseUserInfo.openid ? baseUserInfo.openid : '');
     this.tpl = function() {
@@ -371,7 +354,7 @@ var tips = function(msg, type, time){
             case 23:
             case 24:
             case 25:
-                return {str:"违法平台规定("+key+"?)", base:'未知/次'}
+                return {str:"违反平台规定("+key+"?)", base:'未知/次'}
         }
     };
     this.initScore = (data)=>{
@@ -600,7 +583,7 @@ window.isSearchPage = false;
 window.tips = function(msg, type, time){
     type = typeof type == 'undefined' ? 1 : type;
     $('#wx-alert').remove();
-    $('body').append('<div id="wx-alert" class="weui-toptips '+(!type?'weui-toptips_error':'weui-toptips_success')+'" style="z-index: 10005;"><div class="weui-toptips__inner">'+msg+'</div></div>');
+    $('body').append('<div id="wx-alert" class="weui-toptips '+(!type?'weui-toptips_error':'weui-toptips_success')+'" style="z-index: 10005;display:block"><div class="weui-toptips__inner">'+msg+'</div></div>');
     setTimeout(()=>{
         $('#wx-alert').remove();
     }, time||2e3);
@@ -618,8 +601,6 @@ function getBaseInfo() {
     }
 };
 function doBlockUser(users) {
-    // 废弃
-    return
     var isCommentBlock = /community\/develop\/doc/.test(location.href) ? true : false;
 
     pageDataInfo = window.__INITIAL_STATE__ || {}
@@ -693,8 +674,10 @@ function doBlockUser(users) {
 
         // console.plog('commentRows', commentRows)
         for (var i in commentRows) {
+            var tar = $('li[id="'+commentRows[i].CommentId+'"]')
+            tar.find('.best_comment_unagree').html('<div class="comment_topic_agree"><i class="icon_post_opr icon_topic_unagree" style="margin-right: 5px;"></i><span>'+commentRows[i].DownVote+'</span></div>')
             if(commentRows[i].OpenId in blockUsers){
-                hideOrshow(commentRows[i])
+                hideOrshow(commentRows[i], true)
             }else{
                 var subCommentRows = commentRows[i].Sub && commentRows[i].Sub.length ? commentRows[i].Sub : []
                 // console.plog('subCommentRows', subCommentRows)
@@ -740,8 +723,11 @@ function doBlockUserFromBlockItems(blockItems) {
 
         for (var i in rows) hideOrshow(rows[i])
 
-        $('.plugin-search-hide').removeClass('plugin-search-hide')
-        $('.plugin-no-result-wrp').remove()
+        setTimeout(()=>{
+        console.plog('doBlockUserFromBlockItems')
+            $('html').removeClass('plugin-css-hide')
+        }, 800)
+        // $('.plugin-no-result-wrp').remove()
     }else{
         hideOrshow = function(row){
             var tar = $('li[id="'+row.CommentId+'"]'), blockTip = $('.plugin-blockTip')
@@ -791,8 +777,11 @@ function searchDoBlockUser(blockItmes) {
             }
         }
     }
-    $('.plugin-search-hide').removeClass('plugin-search-hide')
-    $('.plugin-no-result-wrp').remove()
+    setTimeout(()=>{
+        console.plog('searchDoBlockUser')
+        $('html').removeClass('plugin-css-hide')
+    }, 800)
+    // $('.plugin-no-result-wrp').remove()
 };
 window.targetAppEditor = false;
 window.targetCommentTail = "";
@@ -804,6 +793,7 @@ window.loopAppEditorArr=(tar)=>{
         $(tar[i].$el).hasClass("frm_control_group_textarea__focus") && window.answerAppEditorArrs.push({uid:tar[i]._uid, el:tar[i].$el, o:tar[i]});
         $(tar[i].$el).hasClass("js_post_comment_item") && window.replyAppEditorArrs.push({uid:tar[i]._uid, el:tar[i].$el, o:tar[i]});
         $(tar[i].$el).hasClass("anwsers__list") && (window.baseInfo = tar[i]);
+        
         if(!window.baseUserInfo.openid){
             for(var k in tar[i]){
                 k == 'user' && (window.baseUserInfo = tar[i].user)
@@ -814,11 +804,72 @@ window.loopAppEditorArr=(tar)=>{
         }
    }
 };
+
+window.loopGetTopTabs=(tar)=>{
+   var tar = tar||window.app.$children;
+   for(var i in tar){
+        if($(tar[i].$el).attr('id') == 'topTab') {
+            var rname = ($(tar[i].$parent.$el).data('routeName') || '').replace('List', 'Tabs')
+            if(rname && !window.topTabs.hasOwnProperty(rname)){
+                window.topTabs[rname] = tar[i]
+                window.initTopTabs(tar[i], rname)
+            }
+        }
+        
+        if(tar[i].$children.length){
+            window.loopGetTopTabs(tar[i].$children);
+        }
+   }
+};
+window.initTopTabs=(tar, type)=>{
+    let loadingSvg = '<svg class="octicon octicon-octoface anim-pulse" height="20" viewBox="0 0 16 16" version="1.1" width="20" aria-hidden="true" style="fill: #fc8838;margin-right:10px">'+
+    '<path fill-rule="evenodd" d="M14.7 5.34c.13-.32.55-1.59-.13-3.31 0 0-1.05-.33-3.44 1.3-1-.28-2.07-.32-3.13-.32s-2.13.04-3.13.32c-2.39-1.64-3.44-1.3-3.44-1.3-.68 1.72-.26 2.99-.13 3.31C.49 6.21 0 7.33 0 8.69 0 13.84 3.33 15 7.98 15S16 13.84 16 8.69c0-1.36-.49-2.48-1.3-3.35zM8 14.02c-3.3 0-5.98-.15-5.98-3.35 0-.76.38-1.48 1.02-2.07 1.07-.98 2.9-.46 4.96-.46 2.07 0 3.88-.52 4.96.46.65.59 1.02 1.3 1.02 2.07 0 3.19-2.68 3.35-5.98 3.35zM5.49 9.01c-.66 0-1.2.8-1.2 1.78s.54 1.79 1.2 1.79c.66 0 1.2-.8 1.2-1.79s-.54-1.78-1.2-1.78zm5.02 0c-.66 0-1.2.79-1.2 1.78s.54 1.79 1.2 1.79c.66 0 1.2-.8 1.2-1.79s-.53-1.78-1.2-1.78z"></path>'+
+    '<style xmlns="http://www.w3.org/2000/svg" id="pulse" data-anikit="">.anim-pulse {animation-name: pulse;animation-duration: 1s;animation-timing-function: linear;animation-iteration-count: infinite}@keyframes pulse {0% {opacity: .3;color:#00c362}10% {opacity: .8;color:#fc8838}to {opacity: .3;color:#34abfd}}</style>'+
+    '</svg>'
+    var e = tar.$el, _e = $(e), ul = _e.find('ul'), s = _e.find('.selected').attr('tabtype', type),
+    _ul = $(_e.html())
+    if(window.topTabs && window.topTabs[type] && !window.topTabs.tokeover){
+        _ul.addClass('takeover-tab-navs').find('li').each(function(i,v){
+            $(v).on('click', (function(i, ul){
+                return function(e){
+                    var t = ul.find('li:eq('+i+')').text().trim(), tabs = {'文章':'ArticleList', '问答':'QuestionBlogList', '全部':'MixFlowBlogList'}
+                    if(tabs[t] && !$(e.currentTarget).hasClass('selected')){
+                        // $(e.currentTarget).parents('.simple_container').addClass('plugin-css-hide')
+                        $('html').addClass('plugin-css-hide')
+                        $(e.currentTarget).parents('.simple_container')
+                        .find('.list_loading')
+                        .html('<div class="plugin-no-result-wrp"><p class="empty-box" title="社区小助手">'+loadingSvg+'正在加载中....</p></div>').show()
+                    }else{
+                        // $('html').removeClass('plugin-css-hide')
+                    }
+                    window.globalRemoveHideClassHandle && clearTimeout(window.globalRemoveHideClassHandle)
+                    // console.log(t, $(e.currentTarget).attr('tabtype'))
+                    // window.updateTopTabs()
+                    ul.find('li:eq('+i+')').trigger('click')
+                }
+            })(i, ul))
+        })
+        ul.before(_ul).hide()
+        window.topTabs[type].tokeover = true
+    }
+};
+window.updateTopTabs=()=>{
+    for(var i in window.topTabs){
+        $(window.topTabs[i].$el).find('li').each(function(i, v){
+            if($(v).attr('tabtype')){
+                $('.takeover-tab-navs').find('li:eq('+i+')').attr('tabtype', $(v).attr('tabtype'))
+            }
+        })
+    }
+}
+
 window.initAppEditorArr = function() {
    window.answerAppRichEditorArrs = [];
    window.answerAppEditorArrs = [];
    window.replyAppEditorArrs = [];
+   window.topTabs = {};
    window.loopAppEditorArr();
+   window.loopGetTopTabs()
 };
 window.removeTail = function(event) {
    window.targetCommentTail = "";
@@ -937,7 +988,7 @@ window.takeoverCreateCommentOpt = (type)=>{
         .on("click", ()=>{
             postType = (baseInfo.doc && baseInfo.doc.Topic == 1) || /develop\/article\/doc/.test(window.location.href) ? 'discuss' : 'answer'
             var content = window.targetAppEditor.getContent().trim();
-            // window.postMsg({ cmd:"commentContent", type: "modify", postType, content: (content == "" ? "" : content+window.targetCommentTail)}, "https://developers.weixin.qq.com");
+            
             weChat.sendMessage({
                 event: 'commentContent',
                 detail: { 
@@ -1401,9 +1452,16 @@ document.addEventListener('click', function (e) {
 
     if (target.offsetParent && target.offsetParent.id == 'wx-popoverWrapId') {
       if (target.innerHTML == '查看更多') {
-        chrome.extension.sendMessage({cmd: 'search', text: text, host: window.location.host}, (res)=>{
-            textObj.close()
-        });
+        // chrome.extension.sendMessage({cmd: 'search', text: text, host: window.location.host}, (res)=>{
+        //     textObj.close()
+        // });
+        weChat.sendMessage({
+            event: 'viewMore',
+            detail: { api: { method: 'chrome.extension.sendMessage', param: {cmd: 'search', text: text, host: window.location.host}, hasCallback: !0 }, cmd: 'viewMore' }
+        }, function(res){
+            console.log(res)
+        })
+        textObj.close()
       }else if (target.innerHTML == '复制内容') {
         document.execCommand( 'Copy' );
         tips('复制成功')

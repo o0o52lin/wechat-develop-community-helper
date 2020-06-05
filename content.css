@@ -511,11 +511,20 @@
 }
 
 
-#search_article_list .plugin-search-li-hide,
+/*#search_article_list .plugin-search-li-hide,
 .search_posts_area_body .no-result-wrp,
-#article_frame .plugin-search-hide .result-wrp,
-#article_frame .plugin-search-hide .search_posts_area_body__head, 
-.plugin-search-hide .mod_article_list_container,
-.plugin-search-hide .plugin-mod_article_list_container{
+#article_frame .plugin-css-hide .result-wrp,
+#article_frame .plugin-css-hide .search_posts_area_body__head, 
+.plugin-css-hide .mod_topicblock,
+.plugin-css-hide .post_list,
+.plugin-css-hide .plugin-mod_article_list_container,
+.plugin-css-hide.refresh .simple_co0ntainer_body_body{
     display: none;
+}*/
+
+
+.comment_topic_unagree {
+    margin-right: 0;
+    -webkit-transform: rotate(180deg);
+    transform: rotate(180deg);
 }

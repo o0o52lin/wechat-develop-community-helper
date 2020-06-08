@@ -3,21 +3,12 @@ var pluginInfo = chrome.runtime.getManifest()
 var blockUsers =  BGPage.getBlockUsers()
 var currentTail = BGPage.commentTailSetting.current
 
-
-let iframe = $('.api-interceptor');
-chrome.runtime.onMessage.addListener((msg, sender) => {
-	if (msg == 'toggle') {
-		!$('.api-interceptor').hasClass('show-iframe') ? $('.api-interceptor').addClass('show-iframe') : $('.api-interceptor').removeClass('show-iframe')
-	}
-
-	return true;
-});
-
 console.log(BGPage,blockUsers)
 $('.plugin-name').html(pluginInfo.name)
 $('#versionNumber').html(pluginInfo.version)
 $('.year').html(new Date().getFullYear())
 $('#autoSearch').prop('checked', Boolean(BGPage.autoSearch))
+$('#showLoading').prop('checked', Boolean(BGPage.showLoading))
 $('#filterSearch').prop('checked', Boolean(BGPage.filterSearch))
 var initBlockUsers = async function (){
 	var bus = []
@@ -108,6 +99,7 @@ $('.blockOnes').on('click', '.block-one .del', function(e){
 $('.submit.btn_primary').on('click', function(e){
 	var t = $(e.currentTarget)
 	BGPage.updateAutoSearch($('#autoSearch').prop('checked'))
+	BGPage.updateShowLoading($('#showLoading').prop('checked'))
 	BGPage.updateFilterSearch($('#filterSearch').prop('checked'))
 	saveTail()
 	BGPage.saveBlockUsers(blockUsers)

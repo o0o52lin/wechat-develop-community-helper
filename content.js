@@ -79,6 +79,7 @@ port.postMessage({initBgConnections}, function(msg){
         blockU.innerText += ';window.blockUserArticles = '+JSON.stringify(msg.blockUserArticles || window.blockUserArticles);
         blockU.innerText += ';window.nextVersionNotifyTime = '+(msg.nextVersionNotifyTime || 0);
         blockU.innerText += ';window.debugLog = '+(msg.debugLog || false);
+        blockU.innerText += ';window.showLoading = '+(msg.showLoading || false);
         document.documentElement.appendChild(blockU);
     }
 })

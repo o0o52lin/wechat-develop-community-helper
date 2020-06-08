@@ -99,7 +99,7 @@ chrome.runtime.onConnect.addListener(function(port) {
 				})(i))
 	        	
         	}
-        	port.postMessage({ ok: true, msg: 'initConnection ok', nextVersionNotifyTime: window.nextVersionNotifyTime, debugLog: window.debugLog, blockUsers: window.blockUsers, blockUserArticles: window.blockUserArticles, filterSearch:window.filterSearch});
+        	port.postMessage({ ok: true, msg: 'initConnection ok', showLoading: window.showLoading, nextVersionNotifyTime: window.nextVersionNotifyTime, debugLog: window.debugLog, blockUsers: window.blockUsers, blockUserArticles: window.blockUserArticles, filterSearch:window.filterSearch});
         	// port.disconnect()
         }else{
         	port.postMessage({ ok: true, ...msg, filterSearch:window.filterSearch});
@@ -135,6 +135,13 @@ chrome.runtime.onConnect.addListener(function(port) {
 		window[autoSearch_key] = autoSearch;
 		chrome.storage.local.set(data);
 		chrome.contextMenus.update(menus.aSearchMid(), {checked:Boolean(autoSearch)});
+	}
+
+	window.updateShowLoading = function updateShowLoading(showLoading){
+		var data = {};
+		data['showLoading'] = showLoading;
+		window['showLoading'] = showLoading;
+		chrome.storage.local.set(data);
 	}
 
 	window.updateFilterSearch = function updateFilterSearch(filterSearch){
@@ -456,6 +463,10 @@ chrome.runtime.onConnect.addListener(function(port) {
 
 	chrome.storage.local.get(autoSearch_key, function (ret) {
 		updateAutoSearch(ret.autoSearch)
+	})
+
+	chrome.storage.local.get('showLoading', function (ret) {
+		window.showLoading = ret.showLoading ? true : false
 	})
 
 	chrome.storage.local.get('nextVersionNotifyTime', function (res) {

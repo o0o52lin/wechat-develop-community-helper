@@ -38,6 +38,7 @@ let loopLoading = (isMixflowAjax = false)=>{
   var type = getRouteSelector(true)
   window.clshandle && (clearInterval(window.clshandle), window.clshandle = 0)
   window.clshandle = setInterval(()=>{
+    if(!window.showLoading) return
     var t = _$('html'), h = getRouteSelector(), b = h.length ? h.find('.simple_container_body') : [], l = b.length ? b.find('.plugin-no-result-wrp') : []
 
     _$('a[href="/community"]').attr('href', '/community/develop/mixflow')
@@ -278,7 +279,7 @@ let ajax_interceptor_qoweifjqon = {
                 // .find('.list_loading').show()
                 // .html('<div class="plugin-no-result-wrp-for-mixflow"><p class="empty-box" title="社区小助手">'+loadingSvg+'正在加载中...</p></div>')
               console.plog(window.location.href, this.responseURL)
-            }else if(isPage(t.responseURL, 'search')){
+            }else if(isPage(t.responseURL, 'search') && window.showLoading){
               $('html').addClass('plugin-css-hide')
               $('#article_frame').find('.plugin-no-result-wrp').remove()
               $('#article_frame .search_posts_area_body').find('.search_posts_content')

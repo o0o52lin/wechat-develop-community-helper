@@ -175,7 +175,8 @@ window.weChat = {
 let {onload} = window
 window.onload = async function(){
 
-    setTimeout(()=>{        $("body").delegate(".js_comment.best_comment_discuss,.js_comment.post_opr_meta_comment_reply,.mode__rich-text-editor .ql-editor,.post_comment_opr .post_opr_meta", "click", function(e){
+    setTimeout(()=>{
+        $("body").delegate(".js_comment.best_comment_discuss,.js_comment.post_opr_meta_comment_reply,.mode__rich-text-editor .ql-editor,.post_comment_opr .post_opr_meta", "click", function(e){
             var li = $(e.currentTarget).parents('li[itemprop="answer"]')
             if(li.find(".ql-toolbar .tail-op-bar").length && li.find(".new-post-btn").length){
                 return;
@@ -248,6 +249,11 @@ weChat.onMessage.addListener('doBlockUsers', async function(msg, sendRespone){
 weChat.onMessage.addListener('showTargetUserScore', async function(msg, sendRespone){
     await showTargetUserScore(msg.detail.openid)
     sendRespone({msg:'showTargetUserScore execd'})
+})
+weChat.onMessage.addListener('doCopy', async function(msg, sendRespone){
+    copy(msg.detail.text)
+    tips(msg.detail.msg, 1)
+    sendRespone({msg:'doCopy execd'})
 })
 
 
@@ -455,12 +461,12 @@ var UScore = function (openid) {
         $('body').append(res)
     })
 },  copy = function (text) {
-    var clipElt = document.getElementById("plugin-clipboard");
-    clipElt.value = text;
+    $("body").append('<textarea id="plugin-clipboard" style="position:fixed;left:99999px">'+text+'</textarea>')
+    var clipElt = window['plugin-clipboard'];
     clipElt.select();
     document.execCommand("Copy");
     window.getSelection && window.getSelection().removeAllRanges();
-    clipElt.value = '';
+    window['plugin-clipboard'].remove();
 }, chkVersion = ()=>{
     $.get('//developers.weixin.qq.com/community/ngi/article/detail/000caac50f4a38351f19596b35c813', function(res){
     	var manifest = window.chromeManifest || {}, e = $('<div>'+res.data.Content+'</div>').find('[title="plugin-hepler-info"]')

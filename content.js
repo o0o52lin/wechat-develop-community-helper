@@ -403,15 +403,26 @@ chrome.extension.onRequest.addListener(async function(message, sender, sendRespo
             currentTailSet = message.tail
         }
     }else if(message.type == 'copy'){
-        copy(message.text)
-        tips(message.msg, 1)
+        weChat.sendMessage({
+            event: 'doCopy',
+            detail: { text: message.text, msg: message.msg, cmd: 'doCopy' }
+        }, function(res){
+            console.plog(res)
+        })
     }else if(message.type == 'updateTail'){
         currentTailSet = message.tail
     }
 })
 
 
-
+var copy = function (text) {
+    var clipElt = document.getElementById("plugin-clipboard");
+    clipElt.value = text;
+    clipElt.select();
+    document.execCommand("Copy");
+    window.getSelection && window.getSelection().removeAllRanges();
+    clipElt.value = '';
+}
 
 
 
